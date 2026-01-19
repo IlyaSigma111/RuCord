@@ -24,19 +24,24 @@ const database = firebase.database();
 let currentUser = null;
 let currentChannel = 'general';
 let users = {};
+let messages = {};
 let isTyping = false;
 let typingTimeout = null;
+let voicePanelVisible = false;
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 document.addEventListener('DOMContentLoaded', function() {
+    // Заполняем даты для формы регистрации
+    populateDates();
+    
     // Проверяем сохранённую сессию
     const savedUser = localStorage.getItem('rucord_user');
     if (savedUser) {
         try {
             currentUser = JSON.parse(savedUser);
             showChat();
-            loadChannels();
-            loadUsers();
+            setupFirebaseListeners();
+            updateOnlineStatus('online');
         } catch (e) {
             localStorage.removeItem('rucord_user');
         }
@@ -45,15 +50,83 @@ document.addEventListener('DOMContentLoaded', function() {
     // Настройка форм
     setupForms();
     setupEventListeners();
+    
+    // Загружаем статистику
+    loadStatistics();
 });
+
+// ========== ЗАПОЛНЕНИЕ ДАТ ==========
+function populateDates() {
+    // Дни
+    const daySelect = document.getElementById('dobDay');
+    for (let i = 1; i <= 31; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        daySelect.appendChild(option);
+    }
+    
+    // Месяцы
+    const monthSelect = document.getElementById('dobMonth');
+    const months = [
+        'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+        'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+    ];
+    months.forEach((month, index) => {
+        const option = document.createElement('option');
+        option.value = index + 1;
+        option.textContent = month;
+        monthSelect.appendChild(option);
+    });
+    
+    // Годы
+    const yearSelect = document.getElementById('dobYear');
+    const currentYear = new Date().getFullYear();
+    for (let i = currentYear; i >= currentYear - 100; i--) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        yearSelect.appendChild(option);
+    }
+}
+
+// ========== СТАТИСТИКА ==========
+function loadStatistics() {
+    // Имитация статистики
+    const stats = {
+        online: 1234,
+        servers: 589,
+        messages: 2400000
+    };
+    
+    document.getElementById('onlineCountStat').textContent = stats.online.toLocaleString();
+    document.getElementById('serversCountStat').textContent = stats.servers.toLocaleString();
+    document.getElementById('messagesCountStat').textContent = (stats.messages / 1000000).toFixed(1) + 'M';
+    
+    // Обновляем каждые 30 секунд
+    setInterval(() => {
+        const change = Math.floor(Math.random() * 50) - 25;
+        stats.online = Math.max(1000, stats.online + change);
+        document.getElementById('onlineCountStat').textContent = stats.online.toLocaleString();
+    }, 30000);
+}
 
 // ========== ФОРМЫ ==========
 function setupForms() {
     const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
             loginUser();
+        });
+    }
+    
+    if (registerForm) {
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            registerUser();
         });
     }
 }
@@ -63,6 +136,48 @@ function setupEventListeners() {
     const messageInput = document.getElementById('messageInput');
     if (messageInput) {
         messageInput.addEventListener('input', handleTyping);
+    }
+    
+    // Клик вне элементов
+    document.addEventListener('click', function(e) {
+        const voicePanel = document.getElementById('voicePanel');
+        const emojiPicker = document.getElementById('emojiPicker');
+        
+        if (voicePanel && !voicePanel.contains(e.target) && !e.target.closest('.join-btn') && !e.target.closest('.top-btn')) {
+            voicePanel.style.display = 'none';
+            voicePanelVisible = false;
+        }
+        
+        if (emojiPicker && !emojiPicker.contains(e.target) && !e.target.closest('.tool-btn')) {
+            emojiPicker.style.display = 'none';
+        }
+    });
+}
+
+// ========== ПЕРЕКЛЮЧЕНИЕ ФОРМ ==========
+function toggleRegister() {
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    
+    if (registerForm.style.display === 'none') {
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'block';
+    } else {
+        loginForm.style.display = 'block';
+        registerForm.style.display = 'none';
+    }
+}
+
+function togglePassword() {
+    const passwordInput = document.getElementById('password');
+    const showPasswordBtn = document.querySelector('.show-password i');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        showPasswordBtn.className = 'fas fa-eye-slash';
+    } else {
+        passwordInput.type = 'password';
+        showPasswordBtn.className = 'fas fa-eye';
     }
 }
 
@@ -76,42 +191,42 @@ function loginUser() {
         return;
     }
 
-    // Имитация входа (в реальном проекте будет Firebase Auth)
-    const user = {
-        id: 'user_' + Date.now(),
-        email: email,
-        username: email.split('@')[0],
-        avatar: '👤',
-        status: 'online'
-    };
+    // Имитация входа
+    showNotification('Вход выполняется...', 'info');
     
-    currentUser = user;
-    localStorage.setItem('rucord_user', JSON.stringify(user));
-    
-    showNotification('Вход выполнен!', 'success');
-    showChat();
-}
-
-function toggleRegister() {
-    const loginForm = document.querySelector('.login-form');
-    const registerForm = document.getElementById('registerForm');
-    
-    if (registerForm.style.display === 'none') {
-        loginForm.style.display = 'none';
-        registerForm.style.display = 'block';
-    } else {
-        loginForm.style.display = 'block';
-        registerForm.style.display = 'none';
-    }
+    setTimeout(() => {
+        const user = {
+            id: 'user_' + Date.now(),
+            email: email,
+            username: email.split('@')[0],
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
+            status: 'online',
+            discriminator: Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+        };
+        
+        currentUser = user;
+        localStorage.setItem('rucord_user', JSON.stringify(user));
+        
+        // Сохраняем в Firebase
+        database.ref('users/' + user.id).set({
+            ...user,
+            lastSeen: Date.now()
+        });
+        
+        showNotification('Вход выполнен!', 'success');
+        showChat();
+        setupFirebaseListeners();
+        updateOnlineStatus('online');
+    }, 1000);
 }
 
 function registerUser() {
-    const username = document.getElementById('regUsername').value;
     const email = document.getElementById('regEmail').value;
+    const username = document.getElementById('regUsername').value;
     const password = document.getElementById('regPassword').value;
     const confirm = document.getElementById('regPasswordConfirm').value;
     
-    if (!username || !email || !password || !confirm) {
+    if (!email || !username || !password || !confirm) {
         showNotification('Заполните все поля', 'error');
         return;
     }
@@ -121,15 +236,62 @@ function registerUser() {
         return;
     }
     
+    if (!document.getElementById('acceptTerms').checked) {
+        showNotification('Примите условия использования', 'error');
+        return;
+    }
+    
     // Имитация регистрации
-    showNotification('Аккаунт создан! Теперь войдите', 'success');
-    toggleRegister();
+    showNotification('Регистрация...', 'info');
+    
+    setTimeout(() => {
+        const user = {
+            id: 'user_' + Date.now(),
+            email: email,
+            username: username,
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+            status: 'online',
+            discriminator: Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+        };
+        
+        currentUser = user;
+        localStorage.setItem('rucord_user', JSON.stringify(user));
+        
+        // Сохраняем в Firebase
+        database.ref('users/' + user.id).set({
+            ...user,
+            lastSeen: Date.now()
+        });
+        
+        showNotification('Аккаунт создан! Добро пожаловать!', 'success');
+        showChat();
+        setupFirebaseListeners();
+        updateOnlineStatus('online');
+    }, 1500);
 }
 
 function logout() {
+    if (currentUser) {
+        updateOnlineStatus('offline');
+        database.ref('users/' + currentUser.id).update({
+            status: 'offline',
+            lastSeen: Date.now()
+        });
+    }
+    
     currentUser = null;
     localStorage.removeItem('rucord_user');
     location.reload();
+}
+
+// ========== ОНЛАЙН СТАТУС ==========
+function updateOnlineStatus(status) {
+    if (!currentUser) return;
+    
+    database.ref('users/' + currentUser.id).update({
+        status: status,
+        lastSeen: Date.now()
+    });
 }
 
 // ========== ИНТЕРФЕЙС ==========
@@ -137,12 +299,33 @@ function showChat() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('chatScreen').style.display = 'block';
     
-    // Устанавливаем аватар пользователя
+    // Обновляем информацию пользователя
     if (currentUser) {
-        const avatar = document.getElementById('userAvatar');
-        if (avatar) {
-            avatar.innerHTML = `<i class="fas fa-user"></i>`;
+        updateUserProfile();
+    }
+    
+    // Загружаем сообщения
+    loadMessages();
+    
+    // Прокручиваем вниз
+    setTimeout(() => {
+        const container = document.getElementById('messagesContainer');
+        if (container) {
+            container.scrollTop = container.scrollHeight;
         }
+    }, 100);
+}
+
+function updateUserProfile() {
+    const usernameElement = document.querySelector('.username');
+    const statusElement = document.querySelector('.status-text');
+    
+    if (usernameElement) {
+        usernameElement.textContent = currentUser.username;
+    }
+    
+    if (statusElement) {
+        statusElement.textContent = '#' + currentUser.discriminator;
     }
 }
 
@@ -156,8 +339,14 @@ function switchChannel(channel) {
     if (activeChannel) activeChannel.classList.add('active');
     
     // Обновляем заголовок
-    const channelName = document.getElementById('currentChannel');
+    const channelName = document.querySelector('.channel-title h1');
     if (channelName) channelName.textContent = channel;
+    
+    // Обновляем placeholder
+    const input = document.getElementById('messageInput');
+    if (input) {
+        input.placeholder = `Написать сообщение в #${channel}...`;
+    }
     
     // Загружаем сообщения
     loadMessages();
@@ -169,27 +358,27 @@ function switchChannel(channel) {
     }, 100);
 }
 
-function switchServer(server) {
-    // Обновляем активный сервер
-    document.querySelectorAll('.server').forEach(s => s.classList.remove('active'));
-    const activeServer = document.querySelector(`.server[onclick*="${server}"]`);
-    if (activeServer) activeServer.classList.add('active');
+// ========== ГОЛОСОВЫЕ КАНАЛЫ ==========
+function joinVoice(channel) {
+    // Показываем панель с ссылками
+    const voicePanel = document.getElementById('voicePanel');
+    voicePanel.style.display = 'block';
+    voicePanelVisible = true;
     
-    // Обновляем название сервера
-    const serverName = document.getElementById('currentServer');
-    if (serverName) {
-        const names = {
-            'home': 'Главный сервер',
-            'gaming': 'Игровой сервер',
-            'study': 'Учебный сервер',
-            'music': 'Музыкальный сервер',
-            'ai': 'ИИ Чат'
-        };
-        serverName.textContent = names[server] || server;
+    // Добавляем анимацию к иконке
+    const voiceIcon = document.querySelector(`.voice-channel[onclick*="${channel}"] .voice-icon`);
+    if (voiceIcon) {
+        voiceIcon.classList.add('animate-pulse');
+        setTimeout(() => voiceIcon.classList.remove('animate-pulse'), 2000);
     }
     
-    // Загружаем каналы сервера
-    loadChannels();
+    showNotification(`Подключение к ${channel}...`, 'info');
+}
+
+function toggleVoicePanel() {
+    const voicePanel = document.getElementById('voicePanel');
+    voicePanelVisible = !voicePanelVisible;
+    voicePanel.style.display = voicePanelVisible ? 'block' : 'none';
 }
 
 // ========== СООБЩЕНИЯ ==========
@@ -212,8 +401,10 @@ function sendMessage() {
         text: text,
         userId: currentUser.id,
         username: currentUser.username,
+        userAvatar: currentUser.avatar,
         timestamp: Date.now(),
-        channel: currentChannel
+        channel: currentChannel,
+        reactions: {}
     };
     
     // Сохраняем в Firebase
@@ -221,6 +412,12 @@ function sendMessage() {
         .then(() => {
             input.value = '';
             stopTyping();
+            
+            // Прокручиваем вниз
+            setTimeout(() => {
+                const container = document.getElementById('messagesContainer');
+                if (container) container.scrollTop = container.scrollHeight;
+            }, 100);
         })
         .catch(error => {
             console.error('Ошибка отправки:', error);
@@ -231,9 +428,23 @@ function sendMessage() {
 function handleTyping() {
     if (!currentUser) return;
     
+    const input = document.getElementById('messageInput');
+    if (!input.value.trim()) {
+        stopTyping();
+        return;
+    }
+    
     if (!isTyping) {
         isTyping = true;
-        // Отправляем статус печати
+        // Отправляем статус печати в Firebase
+        database.ref('typing/' + currentChannel + '/' + currentUser.id).set({
+            username: currentUser.username,
+            timestamp: Date.now()
+        });
+        
+        // Показываем индикатор
+        const indicator = document.getElementById('typingIndicator');
+        if (indicator) indicator.style.display = 'flex';
     }
     
     clearTimeout(typingTimeout);
@@ -241,8 +452,36 @@ function handleTyping() {
 }
 
 function stopTyping() {
+    if (!currentUser || !isTyping) return;
+    
     isTyping = false;
     // Убираем статус печати
+    database.ref('typing/' + currentChannel + '/' + currentUser.id).remove();
+    
+    // Скрываем индикатор
+    const indicator = document.getElementById('typingIndicator');
+    if (indicator) indicator.style.display = 'none';
+}
+
+function setupFirebaseListeners() {
+    if (!currentUser) return;
+    
+    // Слушаем сообщения
+    database.ref('messages/' + currentChannel).on('value', (snapshot) => {
+        loadMessages();
+    });
+    
+    // Слушаем статусы печатания
+    database.ref('typing/' + currentChannel).on('value', (snapshot) => {
+        updateTypingIndicator(snapshot.val());
+    });
+    
+    // Слушаем пользователей
+    database.ref('users').on('value', (snapshot) => {
+        users = snapshot.val() || {};
+        updateOnlineUsers();
+        updateMembersList();
+    });
 }
 
 function loadMessages() {
@@ -250,15 +489,15 @@ function loadMessages() {
     if (!container) return;
     
     // Очищаем контейнер (кроме приветственного сообщения)
-    const welcome = container.querySelector('.welcome-message');
+    const welcome = container.querySelector('.welcome-section');
     container.innerHTML = '';
     if (welcome) container.appendChild(welcome);
     
     // Загружаем сообщения из Firebase
-    database.ref('messages/' + currentChannel).limitToLast(50).on('value', (snapshot) => {
+    database.ref('messages/' + currentChannel).limitToLast(50).once('value', (snapshot) => {
         const messages = [];
         snapshot.forEach((childSnapshot) => {
-            messages.push(childSnapshot.val());
+            messages.push({ id: childSnapshot.key, ...childSnapshot.val() });
         });
         
         // Сортируем по времени
@@ -279,7 +518,7 @@ function loadMessages() {
 
 function createMessageElement(msg) {
     const div = document.createElement('div');
-    div.className = 'message animate-fade-in';
+    div.className = 'message-container animate-fade-in';
     
     const time = new Date(msg.timestamp).toLocaleTimeString([], { 
         hour: '2-digit', 
@@ -287,59 +526,152 @@ function createMessageElement(msg) {
     });
     
     div.innerHTML = `
-        <div class="message-header">
-            <span class="message-user">${msg.username}</span>
-            <span class="message-time">${time}</span>
+        <div class="message-avatar">
+            <img src="${msg.userAvatar}" alt="${msg.username}">
         </div>
-        <div class="message-content">${escapeHtml(msg.text)}</div>
+        <div class="message-content">
+            <div class="message-header">
+                <span class="message-author">${msg.username}</span>
+                <span class="message-time">${time}</span>
+            </div>
+            <div class="message-text">${escapeHtml(msg.text)}</div>
+            ${msg.reactions && Object.keys(msg.reactions).length > 0 ? 
+                `<div class="message-reactions">
+                    ${Object.entries(msg.reactions).map(([emoji, count]) => 
+                        `<button class="reaction" onclick="addReaction('${msg.id}', '${emoji}')">${emoji} ${count}</button>`
+                    ).join('')}
+                </div>` : ''
+            }
+        </div>
     `;
     
     return div;
 }
 
-// ========== ПОЛЬЗОВАТЕЛИ ==========
-function loadUsers() {
-    database.ref('users').on('value', (snapshot) => {
-        users = snapshot.val() || {};
-        updateOnlineUsers();
-    });
-}
-
-function updateOnlineUsers() {
-    const onlineUsers = Object.values(users).filter(u => u.status === 'online');
-    const countElement = document.getElementById('onlineCount');
-    if (countElement) {
-        countElement.textContent = onlineUsers.length;
+function updateTypingIndicator(typingUsers) {
+    const indicator = document.getElementById('typingIndicator');
+    if (!indicator) return;
+    
+    if (!typingUsers || Object.keys(typingUsers).length === 0) {
+        indicator.style.display = 'none';
+        return;
+    }
+    
+    const users = Object.values(typingUsers)
+        .filter(u => u.userId !== currentUser?.id)
+        .map(u => u.username);
+    
+    if (users.length > 0) {
+        const text = users.length === 1 ? 
+            `${users[0]} печатает...` : 
+            `${users.slice(0, 2).join(', ')} печатают...`;
+        
+        indicator.querySelector('span').textContent = text;
+        indicator.style.display = 'flex';
+    } else {
+        indicator.style.display = 'none';
     }
 }
 
-// ========== МОБИЛЬНЫЙ ИНТЕРФЕЙС ==========
-function toggleSidebar() {
-    const sidebar = document.querySelector('.channels-sidebar');
-    sidebar.classList.toggle('active');
+function addReaction(messageId, emoji) {
+    if (!currentUser) return;
+    
+    database.ref(`messages/${currentChannel}/${messageId}/reactions/${emoji}`)
+        .transaction((current) => (current || 0) + 1);
 }
 
-function toggleMembers() {
-    const sidebar = document.querySelector('.right-sidebar');
-    sidebar.classList.toggle('active');
+// ========== ПОЛЬЗОВАТЕЛИ ==========
+function updateOnlineUsers() {
+    const onlineUsers = Object.values(users).filter(u => u.status === 'online');
+    const count = onlineUsers.length;
+    
+    const countElement = document.getElementById('onlineCount');
+    const badgeElement = document.getElementById('onlineCountBadge');
+    
+    if (countElement) countElement.textContent = count;
+    if (badgeElement) badgeElement.textContent = count;
+}
+
+function updateMembersList() {
+    const container = document.querySelector('.members-list');
+    if (!container) return;
+    
+    // Группируем пользователей по статусу
+    const online = Object.values(users).filter(u => u.status === 'online');
+    const idle = Object.values(users).filter(u => u.status === 'idle');
+    const dnd = Object.values(users).filter(u => u.status === 'dnd');
+    const offline = Object.values(users).filter(u => u.status === 'offline' || !u.status);
+    
+    // Обновляем счетчики
+    document.getElementById('membersCount').textContent = Object.keys(users).length;
+    document.getElementById('onlineCount').textContent = online.length;
+    document.getElementById('offlineCount').textContent = offline.length;
+    
+    // Создаем HTML
+    let html = '';
+    
+    // Онлайн
+    if (online.length > 0) {
+        html += `
+            <div class="member-category">
+                <span class="category-title">ОНЛАЙН — ${online.length}</span>
+            </div>
+        `;
+        
+        online.forEach(user => {
+            if (user.id === currentUser?.id) return;
+            
+            html += `
+                <div class="member" data-status="online" onclick="startDM('${user.id}')">
+                    <div class="member-avatar">
+                        <img src="${user.avatar}" alt="${user.username}">
+                        <div class="status online"></div>
+                    </div>
+                    <div class="member-info">
+                        <span class="member-name">${user.username}</span>
+                        <span class="member-activity">${getUserActivity(user)}</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    // Остальные статусы...
+    // (аналогично для idle, dnd, offline)
+    
+    container.innerHTML = html;
+}
+
+function getUserActivity(user) {
+    const activities = [
+        'Слушает музыку',
+        'Играет в Valorant',
+        'Смотрит стрим',
+        'Работает над проектом',
+        'Общается в чате'
+    ];
+    
+    return activities[Math.floor(Math.random() * activities.length)];
 }
 
 // ========== УТИЛИТЫ ==========
 function showNotification(text, type = 'info') {
-    const container = document.getElementById('notificationContainer');
+    const container = document.getElementById('notificationsContainer');
     if (!container) return;
     
     const notification = document.createElement('div');
-    notification.className = `notification ${type} animate-fade-in`;
+    notification.className = `notification ${type} animate__animated animate__fadeInRight`;
     notification.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                          type === 'error' ? 'exclamation-circle' : 
+                          'info-circle'}"></i>
         <span>${text}</span>
     `;
     
     container.appendChild(notification);
     
     setTimeout(() => {
-        notification.classList.add('hiding');
+        notification.classList.add('animate__fadeOutRight');
         setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
@@ -350,109 +682,77 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ========== ЗАГРУЗКА КАНАЛОВ ==========
-function loadChannels() {
-    // Здесь будет загрузка каналов из Firebase
-    console.log('Загрузка каналов...');
+// ========== МОБИЛЬНЫЙ ИНТЕРФЕЙС ==========
+function toggleMembers() {
+    const sidebar = document.querySelector('.members-sidebar');
+    sidebar.classList.toggle('active');
 }
 
-// ========== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ==========
-function createServer() {
-    const name = prompt('Название сервера:');
-    if (name) {
-        showNotification(`Сервер "${name}" создан!`, 'success');
-    }
-}
-
-function createChannel() {
-    const name = prompt('Название канала:');
-    if (name) {
-        showNotification(`Канал #${name} создан!`, 'success');
-    }
-}
-
-function joinVoice(channel) {
-    showNotification(`Подключение к ${channel}...`, 'info');
-}
-
-function showUserProfile() {
-    if (!currentUser) return;
+function toggleMic() {
+    const btn = document.querySelector('.profile-btn:nth-child(1) i');
+    const muted = btn.classList.contains('fa-microphone-slash');
     
-    alert(`Профиль пользователя:\n\nИмя: ${currentUser.username}\nEmail: ${currentUser.email}\nСтатус: ${currentUser.status}`);
+    if (muted) {
+        btn.className = 'fas fa-microphone';
+        showNotification('Микрофон включён', 'success');
+    } else {
+        btn.className = 'fas fa-microphone-slash';
+        showNotification('Микрофон выключен', 'warning');
+    }
+}
+
+function toggleDeafen() {
+    const btn = document.querySelector('.profile-btn:nth-child(2) i');
+    const deafened = btn.classList.contains('fa-headphones-alt');
+    
+    if (deafened) {
+        btn.className = 'fas fa-headphones';
+        showNotification('Звук включён', 'success');
+    } else {
+        btn.className = 'fas fa-headphones-alt';
+        showNotification('Звук выключен', 'warning');
+    }
 }
 
 function openSettings() {
-    showNotification('Настройки открыты', 'info');
+    showNotification('Настройки откроются скоро', 'info');
 }
 
 function toggleEmojiPicker() {
-    const modal = document.getElementById('emojiPickerModal');
-    modal.style.display = 'flex';
+    const picker = document.getElementById('emojiPicker');
+    picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
 }
 
 function toggleGifPicker() {
-    showNotification('Выбор GIF пока не доступен', 'info');
+    showNotification('GIF-пикер скоро будет добавлен', 'info');
 }
 
 function uploadFile() {
-    showNotification('Загрузка файлов пока не доступна', 'info');
+    showNotification('Загрузка файлов скоро будет доступна', 'info');
 }
 
-// Закрытие модальных окон при клике вне их
-window.addEventListener('click', function(e) {
-    const modals = document.querySelectorAll('.modal');
-    modals.forEach(modal => {
-        if (e.target === modal) {
-            modal.style.display = 'none';
-        }
-    });
-});
+function showFriends() {
+    showNotification('Список друзей откроется скоро', 'info');
+}
 
-// Добавляем базовые CSS для уведомлений
-const style = document.createElement('style');
-style.textContent = `
-    .notification {
-        background: #2f3136;
-        border-left: 4px solid #5865f2;
-        padding: 12px 16px;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        max-width: 300px;
+function toggleNotifications() {
+    showNotification('Уведомления скоро будут доступны', 'info');
+}
+
+function toggleUserMenu() {
+    showNotification('Меню пользователя откроется скоро', 'info');
+}
+
+function startDM(userId) {
+    const user = users[userId];
+    if (user) {
+        showNotification(`Начинаем диалог с ${user.username}`, 'info');
     }
-    
-    .notification.success {
-        border-left-color: #3ba55d;
+}
+
+// Обновляем статус при закрытии страницы
+window.addEventListener('beforeunload', () => {
+    if (currentUser) {
+        updateOnlineStatus('offline');
     }
-    
-    .notification.error {
-        border-left-color: #ed4245;
-    }
-    
-    .notification.info {
-        border-left-color: #5865f2;
-    }
-    
-    .notification i {
-        font-size: 18px;
-    }
-    
-    .notification.success i {
-        color: #3ba55d;
-    }
-    
-    .notification.error i {
-        color: #ed4245;
-    }
-    
-    .notification.info i {
-        color: #5865f2;
-    }
-    
-    .notification.hiding {
-        animation: fadeIn 0.3s ease reverse;
-    }
-`;
-document.head.appendChild(style);
+});
