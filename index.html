@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RuCord - Discord-подобный чат</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
+</head>
+<body>
+    <!-- ЭКРАН ЛОГИНА -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-box">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h1>RuCord</h1>
+                    <p class="subtitle">Присоединяйтесь к лучшему чату</p>
+                </div>
+                
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <i class="fas fa-user input-icon"></i>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                placeholder=" " 
+                                autocomplete="username"
+                                required>
+                            <label for="username">Имя пользователя</label>
+                            <div class="input-underline"></div>
+                        </div>
+                        <div class="input-hint">От 3 до 20 символов</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                placeholder=" " 
+                                autocomplete="current-password"
+                                required>
+                            <label for="password">Пароль</label>
+                            <div class="input-underline"></div>
+                        </div>
+                        <div class="input-hint">Не менее 6 символов</div>
+                    </div>
+                    
+                    <div class="form-group" id="confirmPasswordGroup" style="display: none;">
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input 
+                                type="password" 
+                                id="confirmPassword" 
+                                placeholder=" " 
+                                autocomplete="new-password">
+                            <label for="confirmPassword">Повторите пароль</label>
+                            <div class="input-underline"></div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" onclick="handleAuth()" class="btn-primary" id="authButton">
+                        <span class="btn-text">Войти в RuCord</span>
+                        <i class="fas fa-arrow-right btn-icon"></i>
+                    </button>
+                    
+                    <div class="form-footer">
+                        <a href="#" class="forgot-link">Забыли пароль?</a>
+                        <div class="switch-mode">
+                            <span id="modeText">Нет аккаунта?</span>
+                            <button type="button" onclick="toggleRegisterMode()" class="link-btn" id="registerToggleBtn">
+                                Зарегистрироваться
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="demo-info">
+                        <i class="fas fa-info-circle"></i>
+                        Демо-режим: любой пароль работает
+                    </div>
+                </form>
+                
+                <div class="login-ornament">
+                    <div class="ornament-dot"></div>
+                    <div class="ornament-dot"></div>
+                    <div class="ornament-dot"></div>
+                </div>
+            </div>
+            
+            <div class="login-graphics">
+                <div class="graphic-element el1">
+                    <i class="fas fa-comment-dots"></i>
+                </div>
+                <div class="graphic-element el2">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="graphic-element el3">
+                    <i class="fas fa-rocket"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="background-animation">
+            <div class="bg-circle c1"></div>
+            <div class="bg-circle c2"></div>
+            <div class="bg-circle c3"></div>
+        </div>
+    </div>
+
+    <!-- ОСНОВНОЙ ИНТЕРФЕЙС ЧАТА -->
+    <div id="chatScreen" class="chat-screen" style="display: none;">
+        <!-- Верхняя панель -->
+        <header class="app-header">
+            <div class="header-left">
+                <button class="menu-btn" onclick="toggleServerList()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="server-name">
+                    <div class="server-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <span class="server-text">RuCord Main</span>
+                </div>
+            </div>
+            
+            <div class="header-center">
+                <div class="channel-info">
+                    <i class="fas fa-hashtag"></i>
+                    <span id="currentChannelName">общий</span>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <div class="user-profile">
+                    <div class="user-avatar" id="userAvatar">
+                        <span id="avatarText">U</span>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name" id="currentUserName">Пользователь</span>
+                        <span class="user-status online" id="userStatus">online</span>
+                    </div>
+                </div>
+                <button class="settings-btn" onclick="showSettings()">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Основной контент -->
+        <div class="app-content">
+            <!-- Левая панель (серверы) -->
+            <aside class="server-sidebar">
+                <div class="server-list" id="serverList">
+                    <div class="server-item active" data-server="home">
+                        <div class="server-icon">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <div class="server-tooltip">Главный сервер</div>
+                    </div>
+                    <div class="server-item" data-server="gaming">
+                        <div class="server-icon">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <div class="server-tooltip">Игры</div>
+                    </div>
+                    <div class="server-item" data-server="study">
+                        <div class="server-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="server-tooltip">Учёба</div>
+                    </div>
+                    <div class="server-item add-server">
+                        <div class="server-icon">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div class="server-tooltip">Добавить сервер</div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Панель каналов -->
+            <nav class="channel-sidebar">
+                <div class="channel-header">
+                    <h2 class="server-title">RuCord Main</h2>
+                    <button class="invite-btn">
+                        <i class="fas fa-user-plus"></i>
+                    </button>
+                </div>
+                
+                <div class="channel-category">
+                    <div class="category-header">
+                        <span>ТЕКСТОВЫЕ КАНАЛЫ</span>
+                    </div>
+                    <div class="channel-list">
+                        <div class="channel-item active" data-channel="general" onclick="switchChannel('general')">
+                            <i class="fas fa-hashtag"></i>
+                            <span class="channel-name">общий</span>
+                        </div>
+                        <div class="channel-item" data-channel="games" onclick="switchChannel('games')">
+                            <i class="fas fa-hashtag"></i>
+                            <span class="channel-name">игры</span>
+                            <span class="unread-badge" id="gamesBadge" style="display: none;">3</span>
+                        </div>
+                        <div class="channel-item" data-channel="music" onclick="switchChannel('music')">
+                            <i class="fas fa-hashtag"></i>
+                            <span class="channel-name">музыка</span>
+                        </div>
+                        <div class="channel-item" data-channel="memes" onclick="switchChannel('memes')">
+                            <i class="fas fa-hashtag"></i>
+                            <span class="channel-name">мемы</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="channel-category">
+                    <div class="category-header">
+                        <span>ГОЛОСОВЫЕ КАНАЛЫ</span>
+                    </div>
+                    <div class="channel-list">
+                        <div class="channel-item voice" onclick="joinVoiceChannel()">
+                            <i class="fas fa-headphones"></i>
+                            <span class="channel-name">Общий чат</span>
+                            <span class="voice-count">5</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="direct-messages">
+                    <div class="dm-header">
+                        <span>ЛИЧНЫЕ СООБЩЕНИЯ</span>
+                    </div>
+                    <div class="dm-list" id="dmList">
+                        <!-- Диалоги будут здесь -->
+                    </div>
+                </div>
+                
+                <div class="user-panel">
+                    <div class="current-user">
+                        <div class="user-avatar small">
+                            <span>U</span>
+                        </div>
+                        <div class="user-info">
+                            <span class="username" id="sidebarUserName">Username</span>
+                            <span class="user-id" id="sidebarUserId">#0001</span>
+                        </div>
+                        <div class="user-controls">
+                            <button class="control-btn">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                            <button class="control-btn">
+                                <i class="fas fa-headphones"></i>
+                            </button>
+                            <button class="control-btn" onclick="showSettings()">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Основная область чата -->
+            <main class="chat-area">
+                <!-- Заголовок канала -->
+                <div class="chat-header">
+                    <div class="channel-header">
+                        <i class="fas fa-hashtag"></i>
+                        <h2 id="channelHeaderName">общий</h2>
+                        <div class="channel-topic" id="channelTopic">Обсуждение на любые темы</div>
+                    </div>
+                    <div class="channel-actions">
+                        <button class="header-btn" title="Участники" onclick="toggleMemberList()">
+                            <i class="fas fa-user-friends"></i>
+                            <span class="member-count" id="memberCount">1</span>
+                        </button>
+                        <button class="header-btn" title="Настройки канала">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Список сообщений -->
+                <div class="messages-container" id="messagesContainer">
+                    <div class="welcome-message">
+                        <div class="welcome-icon">
+                            <i class="fas fa-comment-alt"></i>
+                        </div>
+                        <h3>Добро пожаловать в #общий!</h3>
+                        <p>Это начало канала #общий.</p>
+                    </div>
+                    <!-- Сообщения будут добавляться здесь -->
+                </div>
+                
+                <!-- Поле ввода -->
+                <div class="message-input-area">
+                    <div class="input-container">
+                        <button class="input-btn attach-btn">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <div class="message-input-wrapper">
+                            <input 
+                                type="text" 
+                                id="messageInput" 
+                                placeholder="Написать сообщение в #общий..."
+                                autocomplete="off">
+                            <div class="input-actions">
+                                <button class="input-action-btn">
+                                    <i class="fas fa-at"></i>
+                                </button>
+                                <button class="input-action-btn">
+                                    <i class="fas fa-gift"></i>
+                                </button>
+                                <button class="input-action-btn">
+                                    <i class="fas fa-grin"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="input-btn send-btn" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="input-hint">
+                        Нажмите Enter для отправки, Shift+Enter для новой строки
+                    </div>
+                </div>
+            </main>
+
+            <!-- Правая панель (участники) -->
+            <aside class="member-sidebar" id="memberSidebar">
+                <div class="member-header">
+                    <h3>УЧАСТНИКИ — <span id="onlineMembersCount">1</span></h3>
+                    <button class="close-members" onclick="toggleMemberList()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="members-list" id="membersList">
+                    <!-- Участники будут здесь -->
+                </div>
+                <div class="invite-section">
+                    <button class="invite-friends-btn">
+                        <i class="fas fa-user-plus"></i>
+                        Пригласить друзей
+                    </button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Скрытые элементы для звуков -->
+    <audio id="messageSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-message-pop-alert-2354.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Подключение Firebase и скрипты -->
+    <!-- Firebase v9 (модульный) -->
+    <script type="module">
+        // Импорт Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCMrOR72baFZO7WkThLCV1i8mGOSSiyOQU",
+            authDomain: "rucord-f52c5.firebaseapp.com",
+            databaseURL: "https://rucord-f52c5-default-rtdb.firebaseio.com",
+            projectId: "rucord-f52c5",
+            storageBucket: "rucord-f52c5.firebasestorage.app",
+            messagingSenderId: "271482429632",
+            appId: "1:271482429632:web:cb29bee0edb0abee130d25"
+        };
+
+        // Инициализация Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        // Экспорт для использования в основном скрипте
+        window.firebaseDatabase = database;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebasePush = push;
+        window.firebaseOnValue = onValue;
+        window.firebaseUpdate = update;
+        window.firebaseRemove = remove;
+        
+        console.log("Firebase v9 инициализирован!");
+    </script>
+    
+    <!-- Основной скрипт приложения -->
+    <script src="script.js"></script>
+</body>
+</html>
