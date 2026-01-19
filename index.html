@@ -3,29 +3,279 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RuCord - Discord-подобный чат</title>
+    <title>RuCord | Анимированный чат</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+    
+    <!-- Lottie Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.8/lottie.min.js"></script>
+    
+    <!-- Three.js для 3D эффектов -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Anime.js для продвинутых анимаций -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    
+    <!-- Particles.js -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    
+    <style>
+        /* Дополнительные анимации */
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(88, 101, 242, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(88, 101, 242, 0.6); }
+        }
+        
+        .shine-effect {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .shine-effect::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.1) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(30deg);
+            transition: transform 0.6s;
+        }
+        
+        .shine-effect:hover::after {
+            transform: rotate(30deg) translate(20%, 20%);
+        }
+        
+        .neon-border {
+            position: relative;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+        
+        .neon-border::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff3366, #ff9966, #ffcc00, #33cc33, #3399ff, #9966ff);
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .neon-border:hover::before {
+            opacity: 1;
+            animation: border-rotate 3s linear infinite;
+        }
+        
+        @keyframes border-rotate {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+        
+        /* Волны в голосовых каналах */
+        .voice-waves {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            margin-left: auto;
+        }
+        
+        .wave {
+            width: 3px;
+            height: 10px;
+            background: #43b581;
+            border-radius: 3px;
+            animation: wave 1s ease-in-out infinite;
+        }
+        
+        .wave:nth-child(2) { animation-delay: 0.1s; }
+        .wave:nth-child(3) { animation-delay: 0.2s; }
+        .wave:nth-child(4) { animation-delay: 0.3s; }
+        .wave:nth-child(5) { animation-delay: 0.4s; }
+        
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1.5); }
+        }
+        
+        /* Контейнер для 3D анимации */
+        #three-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        
+        /* Эффект параллакса */
+        .parallax-layer {
+            position: absolute;
+            will-change: transform;
+        }
+        
+        /* Анимация появления текста */
+        .text-reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: text-reveal 0.8s ease forwards;
+        }
+        
+        @keyframes text-reveal {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Эффект набора текста */
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #72767d;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+        
+        /* Голограммный эффект для голосовых каналов */
+        .hologram-effect {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hologram-effect::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.1) 50%,
+                transparent 70%
+            );
+            transform: rotate(45deg);
+            animation: hologram-scan 4s linear infinite;
+        }
+        
+        @keyframes hologram-scan {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        /* Анимация пульсации для уведомлений */
+        @keyframes notification-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .notification-pulse {
+            animation: notification-pulse 2s infinite;
+        }
+        
+        /* Эффект мерцания */
+        .flicker {
+            animation: flicker 3s linear infinite;
+        }
+        
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Эффект сияния текста */
+        .glow-text {
+            text-shadow: 0 0 10px currentColor;
+            animation: glow-pulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes glow-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+    </style>
 </head>
 <body>
+    <!-- Частицы фона -->
+    <div id="particles-js"></div>
+    
+    <!-- 3D контейнер -->
+    <div id="three-container"></div>
+    
     <!-- ЭКРАН ЛОГИНА -->
     <div id="loginScreen" class="login-screen">
         <div class="login-container">
-            <div class="login-box">
-                <div class="logo">
-                    <div class="logo-icon">
+            <!-- Анимированный логотип -->
+            <div class="logo-animation-container">
+                <div class="logo-orbits">
+                    <div class="orbit orbit-1">
+                        <div class="orbit-dot dot-1"></div>
+                    </div>
+                    <div class="orbit orbit-2">
+                        <div class="orbit-dot dot-2"></div>
+                    </div>
+                    <div class="orbit orbit-3">
+                        <div class="orbit-dot dot-3"></div>
+                    </div>
+                    <div class="logo-center">
                         <i class="fas fa-comments"></i>
                     </div>
-                    <h1>RuCord</h1>
-                    <p class="subtitle">Присоединяйтесь к лучшему чату</p>
+                </div>
+            </div>
+            
+            <div class="login-box shine-effect float-animation">
+                <div class="logo">
+                    <h1 class="glow-text text-reveal" style="--delay: 0.1s">RuCord</h1>
+                    <p class="subtitle text-reveal" style="--delay: 0.2s">Голосовой чат нового поколения</p>
                 </div>
                 
                 <form id="loginForm" class="login-form">
-                    <div class="form-group">
-                        <div class="input-wrapper">
-                            <i class="fas fa-user input-icon"></i>
+                    <div class="form-group text-reveal" style="--delay: 0.3s">
+                        <div class="input-wrapper neon-border">
+                            <i class="fas fa-user input-icon flicker"></i>
                             <input 
                                 type="text" 
                                 id="username" 
@@ -35,12 +285,12 @@
                             <label for="username">Имя пользователя</label>
                             <div class="input-underline"></div>
                         </div>
-                        <div class="input-hint">От 3 до 20 символов</div>
+                        <div class="input-hint pulse-glow">От 3 до 20 символов</div>
                     </div>
                     
-                    <div class="form-group">
-                        <div class="input-wrapper">
-                            <i class="fas fa-lock input-icon"></i>
+                    <div class="form-group text-reveal" style="--delay: 0.4s">
+                        <div class="input-wrapper neon-border">
+                            <i class="fas fa-lock input-icon flicker"></i>
                             <input 
                                 type="password" 
                                 id="password" 
@@ -50,12 +300,12 @@
                             <label for="password">Пароль</label>
                             <div class="input-underline"></div>
                         </div>
-                        <div class="input-hint">Не менее 6 символов</div>
+                        <div class="input-hint pulse-glow">Не менее 6 символов</div>
                     </div>
                     
-                    <div class="form-group" id="confirmPasswordGroup" style="display: none;">
-                        <div class="input-wrapper">
-                            <i class="fas fa-lock input-icon"></i>
+                    <div class="form-group text-reveal" style="--delay: 0.5s" id="confirmPasswordGroup" style="display: none;">
+                        <div class="input-wrapper neon-border">
+                            <i class="fas fa-lock input-icon flicker"></i>
                             <input 
                                 type="password" 
                                 id="confirmPassword" 
@@ -66,305 +316,742 @@
                         </div>
                     </div>
                     
-                    <button type="button" onclick="handleAuth()" class="btn-primary" id="authButton">
+                    <button type="button" onclick="handleAuth()" class="btn-primary pulse-glow text-reveal" 
+                            id="authButton" style="--delay: 0.6s">
                         <span class="btn-text">Войти в RuCord</span>
                         <i class="fas fa-arrow-right btn-icon"></i>
+                        <div class="btn-sparkles">
+                            <div class="sparkle"></div>
+                            <div class="sparkle"></div>
+                            <div class="sparkle"></div>
+                        </div>
                     </button>
                     
-                    <div class="form-footer">
-                        <a href="#" class="forgot-link">Забыли пароль?</a>
+                    <div class="form-footer text-reveal" style="--delay: 0.7s">
                         <div class="switch-mode">
                             <span id="modeText">Нет аккаунта?</span>
-                            <button type="button" onclick="toggleRegisterMode()" class="link-btn" id="registerToggleBtn">
+                            <button type="button" onclick="toggleRegisterMode()" class="link-btn pulse-glow" 
+                                    id="registerToggleBtn">
                                 Зарегистрироваться
                             </button>
                         </div>
                     </div>
                     
-                    <div class="demo-info">
-                        <i class="fas fa-info-circle"></i>
+                    <div class="demo-info text-reveal pulse-glow" style="--delay: 0.8s">
+                        <i class="fas fa-info-circle flicker"></i>
                         Демо-режим: любой пароль работает
                     </div>
                 </form>
                 
                 <div class="login-ornament">
-                    <div class="ornament-dot"></div>
-                    <div class="ornament-dot"></div>
-                    <div class="ornament-dot"></div>
+                    <div class="ornament-dot pulse-glow"></div>
+                    <div class="ornament-dot pulse-glow" style="animation-delay: 0.2s"></div>
+                    <div class="ornament-dot pulse-glow" style="animation-delay: 0.4s"></div>
                 </div>
             </div>
             
             <div class="login-graphics">
-                <div class="graphic-element el1">
+                <div class="graphic-element el1 float-animation hologram-effect">
                     <i class="fas fa-comment-dots"></i>
+                    <div class="graphic-glow"></div>
                 </div>
-                <div class="graphic-element el2">
+                <div class="graphic-element el2 float-animation hologram-effect" style="animation-delay: 0.2s">
                     <i class="fas fa-users"></i>
+                    <div class="graphic-glow"></div>
                 </div>
-                <div class="graphic-element el3">
-                    <i class="fas fa-rocket"></i>
+                <div class="graphic-element el3 float-animation hologram-effect" style="animation-delay: 0.4s">
+                    <i class="fas fa-microphone"></i>
+                    <div class="graphic-glow"></div>
+                </div>
+                <div class="graphic-element el4 float-animation hologram-effect" style="animation-delay: 0.6s">
+                    <i class="fas fa-video"></i>
+                    <div class="graphic-glow"></div>
                 </div>
             </div>
         </div>
         
         <div class="background-animation">
-            <div class="bg-circle c1"></div>
-            <div class="bg-circle c2"></div>
-            <div class="bg-circle c3"></div>
+            <div class="bg-circle c1 pulse-glow"></div>
+            <div class="bg-circle c2 pulse-glow" style="animation-delay: 0.5s"></div>
+            <div class="bg-circle c3 pulse-glow" style="animation-delay: 1s"></div>
+        </div>
+        
+        <!-- Анимированный фон с волнами -->
+        <div class="wave-background">
+            <div class="wave wave-1"></div>
+            <div class="wave wave-2"></div>
+            <div class="wave wave-3"></div>
         </div>
     </div>
 
     <!-- ОСНОВНОЙ ИНТЕРФЕЙС ЧАТА -->
     <div id="chatScreen" class="chat-screen" style="display: none;">
-        <!-- Верхняя панель -->
-        <header class="app-header">
+        <!-- Верхняя панель с анимациями -->
+        <header class="app-header shine-effect">
             <div class="header-left">
-                <button class="menu-btn" onclick="toggleServerList()">
+                <button class="menu-btn pulse-glow" onclick="toggleServerList()">
                     <i class="fas fa-bars"></i>
+                    <div class="btn-ripple"></div>
                 </button>
                 <div class="server-name">
-                    <div class="server-icon">
-                        <i class="fas fa-home"></i>
+                    <div class="server-icon pulse-glow">
+                        <i class="fas fa-home flicker"></i>
                     </div>
-                    <span class="server-text">RuCord Main</span>
+                    <span class="server-text glow-text">RuCord Main</span>
                 </div>
             </div>
             
             <div class="header-center">
                 <div class="channel-info">
-                    <i class="fas fa-hashtag"></i>
-                    <span id="currentChannelName">общий</span>
+                    <i class="fas fa-hashtag flicker"></i>
+                    <span id="currentChannelName" class="glow-text">общий</span>
+                </div>
+                <div class="voice-status pulse-glow" id="voiceStatus" style="display: none;">
+                    <i class="fas fa-microphone flicker"></i>
+                    <span class="glow-text">Голосовой канал</span>
+                    <button class="leave-voice-btn pulse-glow" onclick="leaveVoiceChannel()">
+                        <i class="fas fa-phone-slash"></i>
+                    </button>
                 </div>
             </div>
             
             <div class="header-right">
-                <div class="user-profile">
-                    <div class="user-avatar" id="userAvatar">
+                <div class="user-profile pulse-glow" onclick="showUserProfile()">
+                    <div class="user-avatar float-animation" id="userAvatar">
                         <span id="avatarText">U</span>
+                        <div class="avatar-ring"></div>
                     </div>
                     <div class="user-details">
-                        <span class="user-name" id="currentUserName">Пользователь</span>
-                        <span class="user-status online" id="userStatus">online</span>
+                        <span class="user-name glow-text" id="currentUserName">Пользователь</span>
+                        <span class="user-status online flicker" id="userStatus">online</span>
                     </div>
                 </div>
-                <button class="settings-btn" onclick="showSettings()">
-                    <i class="fas fa-cog"></i>
+                <button class="settings-btn pulse-glow" onclick="showSettings()">
+                    <i class="fas fa-cog flicker"></i>
+                    <div class="btn-ripple"></div>
                 </button>
+                <button class="voice-btn pulse-glow" id="voiceToggleBtn" onclick="toggleVoiceChat()">
+                    <i class="fas fa-microphone flicker"></i>
+                    <div class="btn-ripple"></div>
+                </button>
+            </div>
+            
+            <!-- Индикатор активности -->
+            <div class="activity-indicator">
+                <div class="activity-dot pulse-glow"></div>
+                <span id="activityText">Все системы активны</span>
             </div>
         </header>
 
-        <!-- Основной контент -->
+        <!-- Основной контент с параллаксом -->
         <div class="app-content">
             <!-- Левая панель (серверы) -->
-            <aside class="server-sidebar">
+            <aside class="server-sidebar shine-effect">
                 <div class="server-list" id="serverList">
-                    <div class="server-item active" data-server="home">
+                    <div class="server-item active pulse-glow hologram-effect" data-server="home">
                         <div class="server-icon">
-                            <i class="fas fa-home"></i>
+                            <i class="fas fa-home flicker"></i>
                         </div>
                         <div class="server-tooltip">Главный сервер</div>
+                        <div class="server-glow"></div>
                     </div>
-                    <div class="server-item" data-server="gaming">
+                    <div class="server-item pulse-glow hologram-effect" data-server="gaming">
                         <div class="server-icon">
-                            <i class="fas fa-gamepad"></i>
+                            <i class="fas fa-gamepad flicker"></i>
                         </div>
                         <div class="server-tooltip">Игры</div>
+                        <div class="server-glow"></div>
                     </div>
-                    <div class="server-item" data-server="study">
+                    <div class="server-item pulse-glow hologram-effect" data-server="music">
                         <div class="server-icon">
-                            <i class="fas fa-graduation-cap"></i>
+                            <i class="fas fa-music flicker"></i>
+                        </div>
+                        <div class="server-tooltip">Музыка</div>
+                        <div class="server-glow"></div>
+                    </div>
+                    <div class="server-item pulse-glow hologram-effect" data-server="stream">
+                        <div class="server-icon">
+                            <i class="fas fa-broadcast-tower flicker"></i>
+                        </div>
+                        <div class="server-tooltip">Стримы</div>
+                        <div class="server-glow"></div>
+                    </div>
+                    <div class="server-item pulse-glow hologram-effect" data-server="study">
+                        <div class="server-icon">
+                            <i class="fas fa-graduation-cap flicker"></i>
                         </div>
                         <div class="server-tooltip">Учёба</div>
+                        <div class="server-glow"></div>
                     </div>
-                    <div class="server-item add-server">
+                    <div class="server-item add-server pulse-glow hologram-effect" onclick="showCreateServerModal()">
                         <div class="server-icon">
-                            <i class="fas fa-plus"></i>
+                            <i class="fas fa-plus flicker"></i>
                         </div>
                         <div class="server-tooltip">Добавить сервер</div>
+                        <div class="server-glow"></div>
                     </div>
+                </div>
+                
+                <!-- Индикатор подключения -->
+                <div class="connection-status pulse-glow">
+                    <div class="status-dot online"></div>
+                    <span>Подключено</span>
+                    <div class="ping-indicator flicker">24ms</div>
                 </div>
             </aside>
 
-            <!-- Панель каналов -->
-            <nav class="channel-sidebar">
+            <!-- Панель каналов с продвинутыми анимациями -->
+            <nav class="channel-sidebar shine-effect">
                 <div class="channel-header">
-                    <h2 class="server-title">RuCord Main</h2>
-                    <button class="invite-btn">
-                        <i class="fas fa-user-plus"></i>
+                    <h2 class="server-title glow-text">RuCord Main</h2>
+                    <button class="invite-btn pulse-glow" onclick="showInviteModal()">
+                        <i class="fas fa-user-plus flicker"></i>
+                        <div class="btn-ripple"></div>
                     </button>
                 </div>
                 
                 <div class="channel-category">
                     <div class="category-header">
-                        <span>ТЕКСТОВЫЕ КАНАЛЫ</span>
+                        <span class="glow-text">ТЕКСТОВЫЕ КАНАЛЫ</span>
+                        <button class="add-channel-btn pulse-glow" onclick="showCreateChannelModal('text')">
+                            <i class="fas fa-plus flicker"></i>
+                        </button>
                     </div>
-                    <div class="channel-list">
-                        <div class="channel-item active" data-channel="general" onclick="switchChannel('general')">
-                            <i class="fas fa-hashtag"></i>
-                            <span class="channel-name">общий</span>
+                    <div class="channel-list" id="textChannels">
+                        <!-- Текстовые каналы будут динамически добавлены -->
+                    </div>
+                </div>
+                
+                <!-- ЯНДЕКС.ТЕЛЕМОСТ ГОЛОСОВЫЕ КАНАЛЫ С АНИМАЦИЯМИ -->
+                <div class="channel-category">
+                    <div class="category-header">
+                        <span class="glow-text">🎙️ ГОЛОСОВЫЕ КАНАЛЫ</span>
+                        <div class="live-indicator pulse-glow">
+                            <div class="live-dot"></div>
+                            <span>LIVE</span>
                         </div>
-                        <div class="channel-item" data-channel="games" onclick="switchChannel('games')">
-                            <i class="fas fa-hashtag"></i>
-                            <span class="channel-name">игры</span>
-                            <span class="unread-badge" id="gamesBadge" style="display: none;">3</span>
+                    </div>
+                    <div class="channel-list" id="voiceChannels">
+                        <!-- Голосовые каналы с Яндекс.Телемост -->
+                        <div class="channel-item voice pulse-glow hologram-effect" 
+                             onclick="joinTelemostChannel('https://telemost.yandex.ru/j/13558610862708', 'Общий чат')"
+                             data-channel="general-voice">
+                            <div class="channel-icon-wrapper">
+                                <i class="fas fa-headphones flicker"></i>
+                                <div class="channel-pulse"></div>
+                            </div>
+                            <span class="channel-name glow-text">Общий чат</span>
+                            <div class="voice-waves">
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                            </div>
+                            <span class="voice-count pulse-glow">5</span>
+                            <div class="channel-hover-effect"></div>
                         </div>
-                        <div class="channel-item" data-channel="music" onclick="switchChannel('music')">
-                            <i class="fas fa-hashtag"></i>
-                            <span class="channel-name">музыка</span>
+                        
+                        <div class="channel-item voice pulse-glow hologram-effect" 
+                             onclick="joinTelemostChannel('https://telemost.yandex.ru/j/31985878188452', 'Игровой лобби')"
+                             data-channel="gaming-voice">
+                            <div class="channel-icon-wrapper">
+                                <i class="fas fa-gamepad flicker"></i>
+                                <div class="channel-pulse" style="animation-delay: 0.1s"></div>
+                            </div>
+                            <span class="channel-name glow-text">Игровой лобби</span>
+                            <div class="voice-waves">
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                            </div>
+                            <span class="voice-count pulse-glow">3</span>
+                            <div class="channel-hover-effect"></div>
                         </div>
-                        <div class="channel-item" data-channel="memes" onclick="switchChannel('memes')">
-                            <i class="fas fa-hashtag"></i>
-                            <span class="channel-name">мемы</span>
+                        
+                        <div class="channel-item voice pulse-glow hologram-effect" 
+                             onclick="joinTelemostChannel('https://telemost.yandex.ru/j/66937963558228', 'Музыкальная комната')"
+                             data-channel="music-voice">
+                            <div class="channel-icon-wrapper">
+                                <i class="fas fa-music flicker"></i>
+                                <div class="channel-pulse" style="animation-delay: 0.2s"></div>
+                            </div>
+                            <span class="channel-name glow-text">Музыкальная комната</span>
+                            <div class="voice-waves">
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                            </div>
+                            <span class="voice-count pulse-glow">4</span>
+                            <div class="channel-hover-effect"></div>
+                        </div>
+                        
+                        <div class="channel-item voice pulse-glow hologram-effect" 
+                             onclick="joinTelemostChannel('https://telemost.yandex.ru/j/57528138882724', 'Стримерская')"
+                             data-channel="stream-voice">
+                            <div class="channel-icon-wrapper">
+                                <i class="fas fa-broadcast-tower flicker"></i>
+                                <div class="channel-pulse" style="animation-delay: 0.3s"></div>
+                            </div>
+                            <span class="channel-name glow-text">Стримерская</span>
+                            <div class="voice-waves">
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                            </div>
+                            <span class="voice-count pulse-glow">2</span>
+                            <div class="channel-hover-effect"></div>
+                        </div>
+                        
+                        <div class="channel-item voice pulse-glow hologram-effect" 
+                             onclick="joinTelemostChannel('https://telemost.yandex.ru/j/34914547450041', 'Учебная группа')"
+                             data-channel="study-voice">
+                            <div class="channel-icon-wrapper">
+                                <i class="fas fa-graduation-cap flicker"></i>
+                                <div class="channel-pulse" style="animation-delay: 0.4s"></div>
+                            </div>
+                            <span class="channel-name glow-text">Учебная группа</span>
+                            <div class="voice-waves">
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                                <div class="wave"></div>
+                            </div>
+                            <span class="voice-count pulse-glow">5</span>
+                            <div class="channel-hover-effect"></div>
                         </div>
                     </div>
                 </div>
                 
+                <!-- ВИДЕО КАНАЛЫ -->
                 <div class="channel-category">
                     <div class="category-header">
-                        <span>ГОЛОСОВЫЕ КАНАЛЫ</span>
+                        <span class="glow-text">📹 ВИДЕО КАНАЛЫ</span>
                     </div>
                     <div class="channel-list">
-                        <div class="channel-item voice" onclick="joinVoiceChannel()">
-                            <i class="fas fa-headphones"></i>
-                            <span class="channel-name">Общий чат</span>
-                            <span class="voice-count">5</span>
+                        <div class="channel-item video pulse-glow hologram-effect" onclick="joinVideoChannel()">
+                            <div class="channel-icon-wrapper">
+                                <i class="fas fa-video flicker"></i>
+                                <div class="video-indicator pulse-glow"></div>
+                            </div>
+                            <span class="channel-name glow-text">Видео-комната</span>
+                            <span class="video-count pulse-glow">3</span>
+                            <div class="channel-hover-effect"></div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="direct-messages">
                     <div class="dm-header">
-                        <span>ЛИЧНЫЕ СООБЩЕНИЯ</span>
+                        <span class="glow-text">💬 ЛИЧНЫЕ СООБЩЕНИЯ</span>
+                        <button class="add-dm-btn pulse-glow" onclick="startNewDM()">
+                            <i class="fas fa-plus flicker"></i>
+                        </button>
                     </div>
                     <div class="dm-list" id="dmList">
                         <!-- Диалоги будут здесь -->
                     </div>
                 </div>
                 
-                <div class="user-panel">
+                <div class="user-panel shine-effect">
                     <div class="current-user">
-                        <div class="user-avatar small">
+                        <div class="user-avatar small float-animation" id="sidebarUserAvatar">
                             <span>U</span>
+                            <div class="avatar-status online"></div>
                         </div>
                         <div class="user-info">
-                            <span class="username" id="sidebarUserName">Username</span>
-                            <span class="user-id" id="sidebarUserId">#0001</span>
+                            <span class="username glow-text" id="sidebarUserName">Username</span>
+                            <span class="user-id flicker" id="sidebarUserId">#0001</span>
                         </div>
                         <div class="user-controls">
-                            <button class="control-btn">
-                                <i class="fas fa-microphone"></i>
+                            <button class="control-btn pulse-glow" id="micBtn" onclick="toggleMicrophone()">
+                                <i class="fas fa-microphone flicker"></i>
+                                <div class="control-indicator"></div>
                             </button>
-                            <button class="control-btn">
-                                <i class="fas fa-headphones"></i>
+                            <button class="control-btn pulse-glow" id="deafenBtn" onclick="toggleDeafen()">
+                                <i class="fas fa-headphones flicker"></i>
+                                <div class="control-indicator"></div>
                             </button>
-                            <button class="control-btn" onclick="showSettings()">
-                                <i class="fas fa-cog"></i>
+                            <button class="control-btn pulse-glow" onclick="showSettings()">
+                                <i class="fas fa-cog flicker"></i>
+                                <div class="control-indicator"></div>
                             </button>
                         </div>
                     </div>
                 </div>
             </nav>
 
-            <!-- Основная область чата -->
+            <!-- Основная область чата с параллаксом -->
             <main class="chat-area">
-                <!-- Заголовок канала -->
-                <div class="chat-header">
+                <!-- Заголовок канала с анимациями -->
+                <div class="chat-header shine-effect">
                     <div class="channel-header">
-                        <i class="fas fa-hashtag"></i>
-                        <h2 id="channelHeaderName">общий</h2>
-                        <div class="channel-topic" id="channelTopic">Обсуждение на любые темы</div>
+                        <i class="fas fa-hashtag flicker" id="channelIcon"></i>
+                        <h2 class="glow-text" id="channelHeaderName">общий</h2>
+                        <div class="channel-topic flicker" id="channelTopic">
+                            <span>Обсуждение на любые темы</span>
+                            <div class="topic-edit pulse-glow" onclick="editChannelTopic()">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                        </div>
                     </div>
                     <div class="channel-actions">
-                        <button class="header-btn" title="Участники" onclick="toggleMemberList()">
-                            <i class="fas fa-user-friends"></i>
-                            <span class="member-count" id="memberCount">1</span>
+                        <button class="header-btn pulse-glow" title="Участники" onclick="toggleMemberList()">
+                            <i class="fas fa-user-friends flicker"></i>
+                            <span class="member-count pulse-glow" id="memberCount">1</span>
+                            <div class="btn-ripple"></div>
                         </button>
-                        <button class="header-btn" title="Настройки канала">
-                            <i class="fas fa-cog"></i>
+                        <button class="header-btn pulse-glow" title="Настройки канала" onclick="showChannelSettings()">
+                            <i class="fas fa-cog flicker"></i>
+                            <div class="btn-ripple"></div>
                         </button>
+                        <button class="header-btn pulse-glow" title="Поиск" onclick="showSearch()">
+                            <i class="fas fa-search flicker"></i>
+                            <div class="btn-ripple"></div>
+                        </button>
+                        <button class="header-btn pulse-glow" title="Закреплённые сообщения" onclick="showPinnedMessages()">
+                            <i class="fas fa-thumbtack flicker"></i>
+                            <div class="pin-count pulse-glow">3</div>
+                            <div class="btn-ripple"></div>
+                        </button>
+                        <button class="header-btn pulse-glow" title="Уведомления" onclick="toggleNotifications()">
+                            <i class="fas fa-bell flicker"></i>
+                            <div class="notification-badge pulse-glow">2</div>
+                            <div class="btn-ripple"></div>
+                        </button>
+                    </div>
+                    
+                    <!-- Индикатор набора сообщения -->
+                    <div class="typing-indicator-container" id="typingIndicator" style="display: none;">
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                        <span id="typingUsers">Кто-то печатает...</span>
                     </div>
                 </div>
                 
-                <!-- Список сообщений -->
+                <!-- Список сообщений с анимациями -->
                 <div class="messages-container" id="messagesContainer">
-                    <div class="welcome-message">
-                        <div class="welcome-icon">
-                            <i class="fas fa-comment-alt"></i>
+                    <div class="welcome-message text-reveal">
+                        <div class="welcome-icon float-animation">
+                            <i class="fas fa-comment-alt flicker"></i>
+                            <div class="welcome-glow"></div>
                         </div>
-                        <h3>Добро пожаловать в #общий!</h3>
-                        <p>Это начало канала #общий.</p>
+                        <h3 class="glow-text">Добро пожаловать в #общий!</h3>
+                        <p class="flicker">Это начало канала #общий. Начните общение!</p>
+                        <div class="welcome-effects">
+                            <div class="effect-dot pulse-glow"></div>
+                            <div class="effect-dot pulse-glow" style="animation-delay: 0.2s"></div>
+                            <div class="effect-dot pulse-glow" style="animation-delay: 0.4s"></div>
+                        </div>
                     </div>
                     <!-- Сообщения будут добавляться здесь -->
                 </div>
                 
-                <!-- Поле ввода -->
-                <div class="message-input-area">
+                <!-- Поле ввода с анимациями -->
+                <div class="message-input-area shine-effect">
                     <div class="input-container">
-                        <button class="input-btn attach-btn">
-                            <i class="fas fa-plus"></i>
+                        <button class="input-btn attach-btn pulse-glow" onclick="showAttachmentMenu()">
+                            <i class="fas fa-plus flicker"></i>
+                            <div class="btn-ripple"></div>
+                            <div class="attachment-preview pulse-glow"></div>
                         </button>
-                        <div class="message-input-wrapper">
+                        <div class="message-input-wrapper neon-border">
                             <input 
                                 type="text" 
                                 id="messageInput" 
                                 placeholder="Написать сообщение в #общий..."
                                 autocomplete="off">
                             <div class="input-actions">
-                                <button class="input-action-btn">
-                                    <i class="fas fa-at"></i>
+                                <button class="input-action-btn pulse-glow" onclick="showGIFPicker()">
+                                    <i class="fas fa-gift flicker"></i>
+                                    <div class="btn-ripple"></div>
                                 </button>
-                                <button class="input-action-btn">
-                                    <i class="fas fa-gift"></i>
+                                <button class="input-action-btn pulse-glow" onclick="showEmojiPicker()">
+                                    <i class="fas fa-grin flicker"></i>
+                                    <div class="btn-ripple"></div>
                                 </button>
-                                <button class="input-action-btn">
-                                    <i class="fas fa-grin"></i>
+                                <button class="input-action-btn pulse-glow" onclick="showStickerPicker()">
+                                    <i class="fas fa-sticky-note flicker"></i>
+                                    <div class="btn-ripple"></div>
+                                </button>
+                                <button class="input-action-btn pulse-glow" onclick="showFormattingMenu()">
+                                    <i class="fas fa-font flicker"></i>
+                                    <div class="btn-ripple"></div>
                                 </button>
                             </div>
+                            <div class="input-effects">
+                                <div class="input-wave"></div>
+                            </div>
                         </div>
-                        <button class="input-btn send-btn" onclick="sendMessage()">
-                            <i class="fas fa-paper-plane"></i>
+                        <button class="input-btn send-btn pulse-glow" onclick="sendMessage()" id="sendMessageBtn">
+                            <i class="fas fa-paper-plane flicker"></i>
+                            <div class="btn-ripple"></div>
+                            <div class="send-sparkles">
+                                <div class="sparkle"></div>
+                                <div class="sparkle"></div>
+                                <div class="sparkle"></div>
+                            </div>
                         </button>
                     </div>
-                    <div class="input-hint">
+                    <div class="input-hint flicker">
                         Нажмите Enter для отправки, Shift+Enter для новой строки
+                        <div class="hint-effects">
+                            <div class="hint-dot pulse-glow"></div>
+                            <div class="hint-dot pulse-glow" style="animation-delay: 0.2s"></div>
+                            <div class="hint-dot pulse-glow" style="animation-delay: 0.4s"></div>
+                        </div>
                     </div>
                 </div>
             </main>
 
-            <!-- Правая панель (участники) -->
-            <aside class="member-sidebar" id="memberSidebar">
+            <!-- Правая панель (участники) с анимациями -->
+            <aside class="member-sidebar shine-effect" id="memberSidebar">
                 <div class="member-header">
-                    <h3>УЧАСТНИКИ — <span id="onlineMembersCount">1</span></h3>
-                    <button class="close-members" onclick="toggleMemberList()">
-                        <i class="fas fa-times"></i>
+                    <h3 class="glow-text">👥 УЧАСТНИКИ — <span class="pulse-glow" id="onlineMembersCount">1</span></h3>
+                    <button class="close-members pulse-glow" onclick="toggleMemberList()">
+                        <i class="fas fa-times flicker"></i>
+                        <div class="btn-ripple"></div>
                     </button>
+                </div>
+                <div class="members-search neon-border">
+                    <i class="fas fa-search flicker"></i>
+                    <input type="text" placeholder="Поиск участников..." id="memberSearch">
+                    <div class="search-effects">
+                        <div class="search-wave"></div>
+                    </div>
                 </div>
                 <div class="members-list" id="membersList">
                     <!-- Участники будут здесь -->
                 </div>
                 <div class="invite-section">
-                    <button class="invite-friends-btn">
-                        <i class="fas fa-user-plus"></i>
-                        Пригласить друзей
+                    <button class="invite-friends-btn pulse-glow" onclick="showInviteModal()">
+                        <i class="fas fa-user-plus flicker"></i>
+                        <span>Пригласить друзей</span>
+                        <div class="invite-effects">
+                            <div class="invite-sparkle"></div>
+                            <div class="invite-sparkle"></div>
+                            <div class="invite-sparkle"></div>
+                        </div>
                     </button>
                 </div>
             </aside>
         </div>
+        
+        <!-- Индикаторы в углах экрана -->
+        <div class="corner-indicators">
+            <div class="corner-indicator top-left pulse-glow">
+                <i class="fas fa-wifi flicker"></i>
+                <span class="ping flicker">24ms</span>
+            </div>
+            <div class="corner-indicator top-right pulse-glow">
+                <i class="fas fa-server flicker"></i>
+                <span class="status flicker">Online</span>
+            </div>
+            <div class="corner-indicator bottom-left pulse-glow">
+                <div class="time-display flicker" id="liveTime">00:00:00</div>
+            </div>
+            <div class="corner-indicator bottom-right pulse-glow">
+                <div class="voice-activity">
+                    <i class="fas fa-signal flicker"></i>
+                    <div class="activity-bar"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Фоновые эффекты -->
+        <div class="background-effects">
+            <div class="floating-orb orb-1"></div>
+            <div class="floating-orb orb-2"></div>
+            <div class="floating-orb orb-3"></div>
+            <div class="grid-lines"></div>
+            <div class="scan-line"></div>
+        </div>
     </div>
 
-    <!-- Скрытые элементы для звуков -->
+    <!-- МОДАЛЬНОЕ ОКНО ГОЛОСОВОГО ЧАТА С АНИМАЦИЯМИ -->
+    <div id="voiceChatModal" class="modal voice-modal" style="display: none;">
+        <div class="modal-content shine-effect">
+            <div class="modal-header">
+                <h2 class="glow-text"><i class="fas fa-microphone flicker"></i> Голосовой чат</h2>
+                <button class="modal-close pulse-glow" onclick="closeVoiceChat()">
+                    <i class="fas fa-times flicker"></i>
+                    <div class="btn-ripple"></div>
+                </button>
+            </div>
+            
+            <div class="voice-container">
+                <div class="voice-info neon-border">
+                    <div class="voice-channel-name">
+                        <i class="fas fa-headphones flicker"></i>
+                        <span class="glow-text" id="currentVoiceChannel">Общий голосовой</span>
+                    </div>
+                    <div class="voice-stats">
+                        <span class="flicker" id="voiceParticipants">1 участник</span>
+                        <span class="voice-ping pulse-glow" id="voicePing">Пинг: 24ms</span>
+                    </div>
+                </div>
+                
+                <!-- Анимированные индикаторы звука -->
+                <div class="voice-visualizer">
+                    <canvas id="voiceVisualizer"></canvas>
+                    <div class="visualizer-effects">
+                        <div class="viz-dot pulse-glow"></div>
+                        <div class="viz-dot pulse-glow" style="animation-delay: 0.1s"></div>
+                        <div class="viz-dot pulse-glow" style="animation-delay: 0.2s"></div>
+                    </div>
+                </div>
+                
+                <div class="voice-participants" id="voiceParticipantsList">
+                    <!-- Участники голосового чата -->
+                </div>
+                
+                <div class="voice-controls">
+                    <button class="voice-control-btn pulse-glow hologram-effect" id="voiceMicControl" onclick="toggleMicrophone()">
+                        <div class="control-icon">
+                            <i class="fas fa-microphone flicker"></i>
+                            <div class="control-ring"></div>
+                        </div>
+                        <span class="glow-text">Микрофон</span>
+                        <div class="control-status online"></div>
+                    </button>
+                    <button class="voice-control-btn pulse-glow hologram-effect" id="voiceDeafenControl" onclick="toggleDeafen()">
+                        <div class="control-icon">
+                            <i class="fas fa-headphones flicker"></i>
+                            <div class="control-ring"></div>
+                        </div>
+                        <span class="glow-text">Звук</span>
+                        <div class="control-status online"></div>
+                    </button>
+                    <button class="voice-control-btn pulse-glow hologram-effect" onclick="toggleVideo()">
+                        <div class="control-icon">
+                            <i class="fas fa-video flicker"></i>
+                            <div class="control-ring"></div>
+                        </div>
+                        <span class="glow-text">Камера</span>
+                        <div class="control-status offline"></div>
+                    </button>
+                    <button class="voice-control-btn disconnect pulse-glow hologram-effect" onclick="leaveVoiceChannel()">
+                        <div class="control-icon">
+                            <i class="fas fa-phone-slash flicker"></i>
+                            <div class="control-ring"></div>
+                        </div>
+                        <span class="glow-text">Выйти</span>
+                        <div class="control-effect"></div>
+                    </button>
+                </div>
+                
+                <div class="voice-settings">
+                    <div class="setting-item">
+                        <label class="glow-text">🎤 Громкость микрофона</label>
+                        <div class="slider-container">
+                            <input type="range" id="micVolume" min="0" max="100" value="50">
+                            <div class="slider-track"></div>
+                            <div class="slider-thumb pulse-glow"></div>
+                        </div>
+                        <span class="volume-value pulse-glow" id="micVolumeValue">50%</span>
+                    </div>
+                    <div class="setting-item">
+                        <label class="glow-text">🔊 Громкость участников</label>
+                        <div class="slider-container">
+                            <input type="range" id="voiceVolume" min="0" max="100" value="50">
+                            <div class="slider-track"></div>
+                            <div class="slider-thumb pulse-glow"></div>
+                        </div>
+                        <span class="volume-value pulse-glow" id="voiceVolumeValue">50%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ОКНО ЯНДЕКС.ТЕЛЕМОСТ -->
+    <div id="telemostModal" class="modal telemost-modal" style="display: none;">
+        <div class="modal-content shine-effect">
+            <div class="modal-header">
+                <h2 class="glow-text"><i class="fab fa-yandex flicker"></i> Яндекс.Телемост</h2>
+                <button class="modal-close pulse-glow" onclick="closeTelemost()">
+                    <i class="fas fa-times flicker"></i>
+                    <div class="btn-ripple"></div>
+                </button>
+            </div>
+            
+            <div class="telemost-container">
+                <div class="telemost-info neon-border">
+                    <div class="telemost-channel">
+                        <i class="fas fa-headphones flicker"></i>
+                        <span class="glow-text" id="telemostChannelName">Общий чат</span>
+                    </div>
+                    <div class="telemost-stats">
+                        <span class="flicker">Подключение к Яндекс.Телемост...</span>
+                        <div class="loading-indicator">
+                            <div class="loading-dot pulse-glow"></div>
+                            <div class="loading-dot pulse-glow" style="animation-delay: 0.2s"></div>
+                            <div class="loading-dot pulse-glow" style="animation-delay: 0.4s"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="telemost-frame-container">
+                    <iframe id="telemostFrame" style="display: none;"></iframe>
+                    <div class="telemost-placeholder pulse-glow">
+                        <div class="placeholder-icon">
+                            <i class="fab fa-yandex flicker"></i>
+                            <div class="placeholder-glow"></div>
+                        </div>
+                        <h3 class="glow-text">Подключение к голосовому чату</h3>
+                        <p class="flicker">Открывается Яндекс.Телемост...</p>
+                        <button class="btn-primary pulse-glow" onclick="openTelemostInNewTab()" id="openTelemostBtn">
+                            <span class="btn-text">Открыть в новой вкладке</span>
+                            <i class="fas fa-external-link-alt"></i>
+                            <div class="btn-sparkles">
+                                <div class="sparkle"></div>
+                                <div class="sparkle"></div>
+                                <div class="sparkle"></div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="telemost-controls">
+                    <button class="telemost-btn pulse-glow" onclick="copyTelemostLink()">
+                        <i class="fas fa-link flicker"></i>
+                        <span>Копировать ссылку</span>
+                    </button>
+                    <button class="telemost-btn pulse-glow" onclick="shareTelemostLink()">
+                        <i class="fas fa-share-alt flicker"></i>
+                        <span>Поделиться</span>
+                    </button>
+                    <button class="telemost-btn disconnect pulse-glow" onclick="closeTelemost()">
+                        <i class="fas fa-times flicker"></i>
+                        <span>Закрыть</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Скрытые элементы -->
     <audio id="messageSound" preload="auto">
         <source src="https://assets.mixkit.co/sfx/preview/mixkit-message-pop-alert-2354.mp3" type="audio/mpeg">
     </audio>
+    
+    <audio id="notificationSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="voiceJoinSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3" type="audio/mpeg">
+    </audio>
 
     <!-- Подключение Firebase и скрипты -->
-    <!-- Firebase v9 (модульный) -->
     <script type="module">
-        // Импорт Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         
-        // Конфигурация Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCMrOR72baFZO7WkThLCV1i8mGOSSiyOQU",
             authDomain: "rucord-f52c5.firebaseapp.com",
@@ -375,11 +1062,9 @@
             appId: "1:271482429632:web:cb29bee0edb0abee130d25"
         };
 
-        // Инициализация Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         
-        // Экспорт для использования в основном скрипте
         window.firebaseDatabase = database;
         window.firebaseRef = ref;
         window.firebaseSet = set;
@@ -391,7 +1076,289 @@
         console.log("Firebase v9 инициализирован!");
     </script>
     
-    <!-- Основной скрипт приложения -->
     <script src="script.js"></script>
+    
+    <script>
+        // Инициализация анимаций при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            initParticles();
+            initThreeJS();
+            initTextReveal();
+            startLiveTime();
+            initParallax();
+        });
+        
+        function initParticles() {
+            particlesJS('particles-js', {
+                particles: {
+                    number: { value: 80, density: { enable: true, value_area: 800 } },
+                    color: { value: "#5865f2" },
+                    shape: { type: "circle" },
+                    opacity: { value: 0.5, random: true },
+                    size: { value: 3, random: true },
+                    line_linked: {
+                        enable: true,
+                        distance: 150,
+                        color: "#5865f2",
+                        opacity: 0.4,
+                        width: 1
+                    },
+                    move: {
+                        enable: true,
+                        speed: 2,
+                        direction: "none",
+                        random: true,
+                        straight: false,
+                        out_mode: "out",
+                        bounce: false
+                    }
+                },
+                interactivity: {
+                    detect_on: "canvas",
+                    events: {
+                        onhover: { enable: true, mode: "repulse" },
+                        onclick: { enable: true, mode: "push" }
+                    }
+                }
+            });
+        }
+        
+        function initThreeJS() {
+            const container = document.getElementById('three-container');
+            if (!container) return;
+            
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+            
+            // Создаем геометрию для фона
+            const geometry = new THREE.IcosahedronGeometry(2, 1);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x5865f2, 
+                wireframe: true,
+                transparent: true,
+                opacity: 0.1
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+            
+            camera.position.z = 5;
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                mesh.rotation.x += 0.001;
+                mesh.rotation.y += 0.002;
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            window.addEventListener('resize', function() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+        
+        function initTextReveal() {
+            const reveals = document.querySelectorAll('.text-reveal');
+            reveals.forEach((el, i) => {
+                const delay = el.style.getPropertyValue('--delay') || '0s';
+                el.style.animationDelay = delay;
+            });
+        }
+        
+        function startLiveTime() {
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('ru-RU');
+                const timeElement = document.getElementById('liveTime');
+                if (timeElement) {
+                    timeElement.textContent = timeString;
+                }
+            }
+            updateTime();
+            setInterval(updateTime, 1000);
+        }
+        
+        function initParallax() {
+            document.addEventListener('mousemove', function(e) {
+                const x = (e.clientX / window.innerWidth - 0.5) * 20;
+                const y = (e.clientY / window.innerHeight - 0.5) * 20;
+                
+                document.querySelectorAll('.parallax-layer').forEach(layer => {
+                    const depth = layer.dataset.depth || 1;
+                    layer.style.transform = `translate(${x * depth}px, ${y * depth}px)`;
+                });
+            });
+        }
+        
+        // Анимация для кнопок при наведении
+        document.querySelectorAll('.pulse-glow').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05)';
+                this.style.boxShadow = '0 0 30px rgba(88, 101, 242, 0.8)';
+            });
+            
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+                this.style.boxShadow = '';
+            });
+        });
+        
+        // Эффект ripple для всех кнопок
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.7);
+                    transform: scale(0);
+                    animation: ripple-animation 0.6s linear;
+                    width: ${size}px;
+                    height: ${size}px;
+                    left: ${x}px;
+                    top: ${y}px;
+                `;
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+        
+        // Добавляем стили для ripple
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple-animation {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Функции для Яндекс.Телемост
+        let currentTelemostLink = '';
+        let currentTelemostName = '';
+        
+        function joinTelemostChannel(link, name) {
+            currentTelemostLink = link;
+            currentTelemostName = name;
+            
+            document.getElementById('telemostChannelName').textContent = name;
+            document.getElementById('openTelemostBtn').dataset.link = link;
+            
+            showNotification(`Подключение к ${name}...`, 'info');
+            playSound('voiceJoinSound');
+            
+            setTimeout(() => {
+                document.getElementById('telemostModal').style.display = 'flex';
+                animateModal('telemostModal');
+            }, 500);
+        }
+        
+        function closeTelemost() {
+            document.getElementById('telemostModal').style.display = 'none';
+        }
+        
+        function openTelemostInNewTab() {
+            const btn = document.getElementById('openTelemostBtn');
+            const link = btn.dataset.link || currentTelemostLink;
+            window.open(link, '_blank');
+            showNotification('Телемост открыт в новой вкладке', 'success');
+        }
+        
+        function copyTelemostLink() {
+            navigator.clipboard.writeText(currentTelemostLink)
+                .then(() => showNotification('Ссылка скопирована в буфер', 'success'))
+                .catch(() => showNotification('Не удалось скопировать ссылку', 'error'));
+        }
+        
+        function shareTelemostLink() {
+            if (navigator.share) {
+                navigator.share({
+                    title: `Присоединяйся к ${currentTelemostName}`,
+                    text: `Присоединяйся к голосовому чату ${currentTelemostName}`,
+                    url: currentTelemostLink
+                });
+            } else {
+                copyTelemostLink();
+            }
+        }
+        
+        function playSound(soundId) {
+            const sound = document.getElementById(soundId);
+            if (sound) {
+                sound.currentTime = 0;
+                sound.play().catch(e => console.log('Звук не воспроизведён:', e));
+            }
+        }
+        
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type} text-reveal`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'error' ? '#ff4444' : type === 'success' ? '#43b581' : '#5865f2'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+                z-index: 10000;
+                animation: slideInRight 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'} flicker"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        function animateModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.opacity = '0';
+                modal.style.transform = 'scale(0.9)';
+                
+                setTimeout(() => {
+                    modal.style.opacity = '1';
+                    modal.style.transform = 'scale(1)';
+                    modal.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                }, 10);
+            }
+        }
+        
+        // Экспортируем функции
+        window.joinTelemostChannel = joinTelemostChannel;
+        window.closeTelemost = closeTelemost;
+        window.openTelemostInNewTab = openTelemostInNewTab;
+        window.copyTelemostLink = copyTelemostLink;
+        window.shareTelemostLink = shareTelemostLink;
+        window.showNotification = showNotification;
+    </script>
 </body>
 </html>
