@@ -5,6 +5,7 @@ let users = {};
 let messages = {};
 let isRegisterMode = false;
 let currentServer = 'home';
+let isAuthProcessing = false;
 
 // =========== ИНИЦИАЛИЗАЦИЯ ===========
 document.addEventListener('DOMContentLoaded', function() {
@@ -22,6 +23,17 @@ function initializeApp() {
         console.error('Firebase не инициализирован!');
         showNotification('Ошибка подключения к базе данных', 'error');
     }
+    
+    // Добавляем обработчики для кнопок
+    document.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            // Анимация нажатия
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
 }
 
 function setupEventListeners() {
@@ -59,10 +71,33 @@ function setupEventListeners() {
             }
         });
     });
+    
+    // Прямой клик по кнопке регистрации
+    const registerToggleBtn = document.getElementById('registerToggleBtn');
+    if (registerToggleBtn) {
+        registerToggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleRegisterMode();
+        });
+    }
+    
+    // Форма для сброса состояния при фокусе
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+    });
 }
 
-// =========== АУТЕНТИФИКАЦИЯ ===========
+// =========== АУТЕНТИФИКАЦИЯ (ИСПРАВЛЕННАЯ) ===========
 function toggleRegisterMode() {
+    if (isAuthProcessing) return;
+    
     isRegisterMode = !isRegisterMode;
     const confirmGroup = document.getElementById('confirmPasswordGroup');
     const authButton = document.getElementById('authButton');
@@ -92,54 +127,85 @@ function animateFormSwitch() {
     setTimeout(() => {
         form.style.opacity = '1';
         form.style.transform = 'translateX(0)';
+        form.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
     }, 300);
 }
 
 async function handleAuth() {
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
+    // Защита от двойного нажатия
+    if (isAuthProcessing) return;
+    isAuthProcessing = true;
+    
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const authButton = document.getElementById('authButton');
+    
+    const username = usernameInput ? usernameInput.value.trim() : '';
+    const password = passwordInput ? passwordInput.value : '';
+    const confirmPassword = confirmPasswordInput ? confirmPasswordInput.value : '';
     
     // Валидация
     if (!username || username.length < 3 || username.length > 20) {
         showNotification('Имя пользователя должно быть от 3 до 20 символов', 'error');
+        isAuthProcessing = false;
         return;
     }
     
-    if (!password || password.length < 6) {
-        showNotification('Пароль должен содержать не менее 6 символов', 'error');
+    if (!password || password.length < 1) {
+        showNotification('Введите пароль', 'error');
+        isAuthProcessing = false;
         return;
     }
     
     if (isRegisterMode && password !== confirmPassword) {
         showNotification('Пароли не совпадают', 'error');
+        isAuthProcessing = false;
         return;
     }
     
     // Показываем анимацию загрузки
-    const authButton = document.getElementById('authButton');
     const originalHTML = authButton.innerHTML;
-    authButton.innerHTML = '<div class="loading-spinner" style="width: 20px; height: 20px;"></div>';
+    const originalText = authButton.querySelector('.btn-text')?.textContent || authButton.textContent;
+    
+    authButton.innerHTML = `
+        <div class="loading-spinner" style="width: 20px; height: 20px; margin: 0 auto;"></div>
+        <span style="opacity: 0.7; font-size: 0.9em;">${isRegisterMode ? 'Регистрация...' : 'Вход...'}</span>
+    `;
     authButton.disabled = true;
+    authButton.style.cursor = 'wait';
     
-    // Имитация задержки сети
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Анимация кнопки
+    authButton.style.transform = 'scale(0.95)';
     
-    if (isRegisterMode) {
-        await registerUser(username, password);
-    } else {
-        await loginUser(username, password);
+    // Имитация задержки сети (уменьшено для отзывчивости)
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    try {
+        if (isRegisterMode) {
+            await registerUser(username, password);
+        } else {
+            await loginUser(username, password);
+        }
+    } catch (error) {
+        console.error('Ошибка аутентификации:', error);
+        showNotification('Ошибка при выполнении операции', 'error');
+    } finally {
+        // Всегда восстанавливаем кнопку
+        setTimeout(() => {
+            authButton.innerHTML = originalHTML;
+            authButton.disabled = false;
+            authButton.style.cursor = 'pointer';
+            authButton.style.transform = '';
+            isAuthProcessing = false;
+        }, 300);
     }
-    
-    // Восстанавливаем кнопку
-    authButton.innerHTML = originalHTML;
-    authButton.disabled = false;
 }
 
 async function registerUser(username, password) {
     try {
-        // В демо-режипе просто создаём пользователя локально
-        // В реальном приложении здесь будет вызов Firebase Authentication
+        // В демо-режиме просто создаём пользователя локально
+        console.log('Регистрация пользователя:', username);
         
         // Проверяем, существует ли пользователь
         const userRef = window.firebaseRef(window.firebaseDatabase, 'users/' + encodeUsername(username));
@@ -164,8 +230,8 @@ async function registerUser(username, password) {
             online: true,
             status: 'online',
             discriminator: generateDiscriminator(),
-            isAdmin: false,
-            isTeacher: false
+            isAdmin: username.toLowerCase() === 'admin',
+            isTeacher: username.toLowerCase() === 'teacher'
         };
         
         await window.firebaseSet(userRef, userData);
@@ -176,25 +242,30 @@ async function registerUser(username, password) {
         
         currentUser = userData;
         showNotification(`Аккаунт ${username} успешно создан!`, 'success');
+        await new Promise(resolve => setTimeout(resolve, 800)); // Задержка для показа уведомления
         showChatInterface();
         
     } catch (error) {
         console.error('Ошибка регистрации:', error);
-        showNotification('Ошибка при создании аккаунта', 'error');
+        throw error;
     }
 }
 
 async function loginUser(username, password) {
     try {
+        console.log('Вход пользователя:', username);
+        
         // В демо-режиме проверяем пользователя в Firebase
         const userRef = window.firebaseRef(window.firebaseDatabase, 'users/' + encodeUsername(username));
         const snapshot = await new Promise(resolve => {
             window.firebaseOnValue(userRef, resolve, { onlyOnce: true });
         });
         
+        let userData;
+        
         if (snapshot.exists()) {
             // Пользователь существует, обновляем статус
-            const userData = snapshot.val();
+            userData = snapshot.val();
             userData.lastSeen = Date.now();
             userData.online = true;
             userData.status = 'online';
@@ -209,9 +280,9 @@ async function loginUser(username, password) {
             
         } else {
             // Пользователь не существует, создаём демо-пользователя
-            // В реальном приложении здесь была бы проверка пароля
+            // В демо-режиме любой пароль работает
             const userId = generateUserId();
-            const userData = {
+            userData = {
                 id: userId,
                 username: username,
                 displayName: username,
@@ -234,11 +305,12 @@ async function loginUser(username, password) {
         localStorage.setItem('rucord_username', username);
         
         showNotification(`Добро пожаловать, ${username}!`, 'success');
+        await new Promise(resolve => setTimeout(resolve, 800)); // Задержка для показа уведомления
         showChatInterface();
         
     } catch (error) {
         console.error('Ошибка входа:', error);
-        showNotification('Ошибка при входе в аккаунт', 'error');
+        throw error;
     }
 }
 
@@ -249,8 +321,10 @@ function checkAuthState() {
     if (savedUser && savedUsername) {
         try {
             currentUser = JSON.parse(savedUser);
-            // Автоматический вход
-            showChatInterface();
+            // Автоматический вход с задержкой для плавности
+            setTimeout(() => {
+                showChatInterface();
+            }, 500);
         } catch (e) {
             console.error('Ошибка восстановления сессии:', e);
             localStorage.removeItem('rucord_user');
@@ -279,9 +353,31 @@ function logout() {
     users = {};
     messages = {};
     
-    // Показываем экран логина
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('chatScreen').style.display = 'none';
+    // Показываем экран логина с анимацией
+    const loginScreen = document.getElementById('loginScreen');
+    const chatScreen = document.getElementById('chatScreen');
+    
+    chatScreen.style.opacity = '0';
+    chatScreen.style.transform = 'scale(0.95)';
+    
+    setTimeout(() => {
+        chatScreen.style.display = 'none';
+        loginScreen.style.display = 'flex';
+        
+        // Сброс формы
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        if (usernameInput) usernameInput.value = '';
+        if (passwordInput) passwordInput.value = '';
+        
+        // Анимация появления
+        loginScreen.style.opacity = '0';
+        setTimeout(() => {
+            loginScreen.style.opacity = '1';
+            loginScreen.style.transform = 'scale(1)';
+            loginScreen.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        }, 10);
+    }, 300);
     
     showNotification('Вы успешно вышли из аккаунта', 'success');
 }
@@ -292,8 +388,11 @@ function showChatInterface() {
     const loginScreen = document.getElementById('loginScreen');
     const chatScreen = document.getElementById('chatScreen');
     
+    if (!loginScreen || !chatScreen) return;
+    
     loginScreen.style.opacity = '0';
     loginScreen.style.transform = 'scale(0.9)';
+    loginScreen.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
     
     setTimeout(() => {
         loginScreen.style.display = 'none';
@@ -362,12 +461,6 @@ function updateUserInfo() {
     avatarElementsDiv.forEach(el => {
         el.style.background = currentUser.avatarColor || 'linear-gradient(135deg, #7289da, #43b581)';
     });
-    
-    // Показываем/скрываем админ-панель
-    const adminPanel = document.getElementById('adminPanel');
-    if (adminPanel) {
-        adminPanel.style.display = currentUser.isAdmin ? 'block' : 'none';
-    }
 }
 
 // =========== РАБОТА С СООБЩЕНИЯМИ ===========
@@ -479,14 +572,16 @@ function addMessageToUI(message) {
 
 async function sendMessage() {
     const messageInput = document.getElementById('messageInput');
-    const text = messageInput.value.trim();
+    const text = messageInput ? messageInput.value.trim() : '';
     
     if (!text || !currentUser) return;
     
     if (text.startsWith('/')) {
         handleCommand(text);
-        messageInput.value = '';
-        messageInput.style.height = 'auto';
+        if (messageInput) {
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+        }
         return;
     }
     
@@ -509,8 +604,10 @@ async function sendMessage() {
         await window.firebaseSet(messageRef, message);
         
         // Очищаем поле ввода
-        messageInput.value = '';
-        messageInput.style.height = 'auto';
+        if (messageInput) {
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+        }
         
         // Прокручиваем к новому сообщению
         scrollToBottom();
@@ -600,11 +697,15 @@ function updateOnlineCount() {
 function switchChannel(channel) {
     if (channel === currentChannel) return;
     
-    // Обновляем активный канал в UI
+    // Анимация переключения
     document.querySelectorAll('.channel-item').forEach(item => {
         item.classList.remove('active');
         if (item.dataset.channel === channel) {
             item.classList.add('active');
+            item.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                item.style.transform = '';
+            }, 150);
         }
     });
     
@@ -880,6 +981,34 @@ function addSystemMessage(text) {
     scrollToBottom();
 }
 
+// Дополнительные функции для кнопок
+function clearChat() {
+    const messagesContainer = document.getElementById('messagesContainer');
+    if (messagesContainer) {
+        messagesContainer.innerHTML = '<div class="welcome-message"><div class="welcome-icon"><i class="fas fa-comment-alt"></i></div><h3>Добро пожаловать в #общий!</h3><p>Это начало канала #общий.</p></div>';
+        showNotification('Чат очищен', 'success');
+    }
+}
+
+function showUsersList() {
+    const onlineUsers = Object.values(users).filter(u => u.online);
+    const offlineUsers = Object.values(users).filter(u => !u.online);
+    
+    let message = `<strong>Пользователи онлайн (${onlineUsers.length}):</strong><br>`;
+    onlineUsers.forEach(user => {
+        message += `• ${user.username}${user.isAdmin ? ' 👑' : ''}${user.isTeacher ? ' 🎓' : ''}<br>`;
+    });
+    
+    if (offlineUsers.length > 0) {
+        message += `<br><strong>Оффлайн (${offlineUsers.length}):</strong><br>`;
+        offlineUsers.forEach(user => {
+            message += `• ${user.username}<br>`;
+        });
+    }
+    
+    addSystemMessage(message);
+}
+
 // Экспортируем функции для использования в HTML
 window.handleAuth = handleAuth;
 window.toggleRegisterMode = toggleRegisterMode;
@@ -889,3 +1018,4 @@ window.toggleServerList = toggleServerList;
 window.toggleMemberList = toggleMemberList;
 window.showSettings = showSettings;
 window.logout = logout;
+window.clearChat = clearChat;
