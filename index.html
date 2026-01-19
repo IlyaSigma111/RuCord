@@ -10,46 +10,33 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
 </head>
 <body>
-    <!-- МЕНЮ ЛОГИНА -->
+    <!-- ЭКРАН ЛОГИНА -->
     <div id="loginScreen" class="login-screen animate__animated animate__fadeIn">
         <div class="login-container">
-            <!-- ЛЕВАЯ КОЛОНКА - ВИЗУАЛ -->
+            <!-- ЛЕВАЯ КОЛОНКА -->
             <div class="login-visual">
                 <div class="visual-content">
-                    <div class="floating-elements">
-                        <div class="float-icon discord animate__animated animate__bounceIn" style="animation-delay: 0.2s">
-                            <i class="fab fa-discord"></i>
-                        </div>
-                        <div class="float-icon message animate__animated animate__bounceIn" style="animation-delay: 0.4s">
-                            <i class="fas fa-comment-alt"></i>
-                        </div>
-                        <div class="float-icon voice animate__animated animate__bounceIn" style="animation-delay: 0.6s">
-                            <i class="fas fa-microphone"></i>
-                        </div>
-                        <div class="float-icon video animate__animated animate__bounceIn" style="animation-delay: 0.8s">
-                            <i class="fas fa-video"></i>
-                        </div>
+                    <div class="logo-main">
+                        <i class="fab fa-discord"></i>
+                        <h1>Ru<span>Cord</span></h1>
                     </div>
+                    <p class="tagline">Общайся. Играй. Твори.</p>
                     
-                    <div class="welcome-text">
-                        <h1 class="animate__animated animate__fadeInUp">Добро пожаловать в <span class="gradient-text">RuCord</span></h1>
-                        <p class="animate__animated animate__fadeInUp" style="animation-delay: 0.1s">
-                            Современная платформа для общения, игр и творчества
-                        </p>
-                    </div>
-                    
-                    <div class="stats animate__animated animate__fadeInUp" style="animation-delay: 0.2s">
-                        <div class="stat-item">
-                            <div class="stat-number" id="onlineCountStat">1,234</div>
-                            <div class="stat-label">Онлайн сейчас</div>
+                    <div class="features">
+                        <div class="feature">
+                            <i class="fas fa-comments"></i>
+                            <h3>Чат</h3>
+                            <p>Общайтесь в реальном времени</p>
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-number" id="serversCountStat">589</div>
-                            <div class="stat-label">Активных серверов</div>
+                        <div class="feature">
+                            <i class="fas fa-headphones"></i>
+                            <h3>Голос</h3>
+                            <p>Голосовые и видео звонки</p>
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-number" id="messagesCountStat">2.4M</div>
-                            <div class="stat-label">Сообщений сегодня</div>
+                        <div class="feature">
+                            <i class="fas fa-users"></i>
+                            <h3>Сообщество</h3>
+                            <p>Присоединяйтесь к серверам</p>
                         </div>
                     </div>
                 </div>
@@ -57,36 +44,37 @@
 
             <!-- ПРАВАЯ КОЛОНКА - ФОРМА -->
             <div class="login-form-container">
-                <div class="form-wrapper animate__animated animate__fadeInRight">
-                    <div class="form-header">
-                        <div class="form-logo">
-                            <i class="fab fa-discord"></i>
-                        </div>
-                        <h2>Войдите в RuCord</h2>
-                        <p>Рады снова вас видеть!</p>
+                <div class="form-wrapper">
+                    <div class="form-tabs">
+                        <button class="tab-btn active" onclick="switchTab('login')">Вход</button>
+                        <button class="tab-btn" onclick="switchTab('register')">Регистрация</button>
                     </div>
 
-                    <form id="loginForm" class="login-form">
-                        <div class="input-group animate__animated animate__fadeInRight" style="animation-delay: 0.1s">
-                            <label for="email">Email или номер телефона</label>
+                    <!-- ФОРМА ВХОДА -->
+                    <form id="loginForm" class="auth-form active">
+                        <h2>С возвращением!</h2>
+                        <p class="form-subtitle">Мы рады снова тебя видеть!</p>
+                        
+                        <div class="input-group">
+                            <label for="loginEmail">Email или телефон</label>
                             <div class="input-with-icon">
-                                <i class="fas fa-envelope"></i>
-                                <input type="text" id="email" placeholder="you@example.com" required>
+                                <i class="fas fa-user"></i>
+                                <input type="text" id="loginEmail" placeholder="you@example.com" required>
                             </div>
                         </div>
 
-                        <div class="input-group animate__animated animate__fadeInRight" style="animation-delay: 0.2s">
-                            <label for="password">Пароль</label>
+                        <div class="input-group">
+                            <label for="loginPassword">Пароль</label>
                             <div class="input-with-icon">
                                 <i class="fas fa-lock"></i>
-                                <input type="password" id="password" placeholder="Введите пароль" required>
-                                <button type="button" class="show-password" onclick="togglePassword()">
+                                <input type="password" id="loginPassword" placeholder="Введите пароль" required>
+                                <button type="button" class="show-password" onclick="togglePassword('loginPassword')">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="form-options animate__animated animate__fadeInRight" style="animation-delay: 0.3s">
+                        <div class="form-options">
                             <label class="checkbox">
                                 <input type="checkbox" id="rememberMe" checked>
                                 <span class="custom-checkbox"></span>
@@ -95,39 +83,26 @@
                             <a href="#" class="forgot-link">Забыли пароль?</a>
                         </div>
 
-                        <button type="submit" class="btn-login animate__animated animate__fadeInRight" style="animation-delay: 0.4s">
+                        <button type="button" onclick="loginUser()" class="btn-login">
                             <span class="btn-text">Войти</span>
                             <i class="fas fa-arrow-right"></i>
                         </button>
 
-                        <div class="register-section animate__animated animate__fadeInRight" style="animation-delay: 0.5s">
-                            <span>Нет аккаунта?</span>
-                            <button type="button" class="btn-register" onclick="toggleRegister()">
-                                Зарегистрироваться
-                            </button>
+                        <div class="divider">
+                            <span>или</span>
                         </div>
 
-                        <!-- QR-КОД ВХОД -->
-                        <div class="qr-section animate__animated animate__fadeInRight" style="animation-delay: 0.6s">
-                            <div class="qr-code">
-                                <div class="qr-placeholder">
-                                    <i class="fas fa-qrcode"></i>
-                                </div>
-                            </div>
-                            <p>Войдите с помощью QR-кода</p>
-                        </div>
+                        <button type="button" class="btn-qr">
+                            <i class="fas fa-qrcode"></i>
+                            Войти с QR-кодом
+                        </button>
                     </form>
 
                     <!-- ФОРМА РЕГИСТРАЦИИ -->
-                    <form id="registerForm" class="register-form" style="display: none;">
-                        <div class="form-header">
-                            <div class="form-logo">
-                                <i class="fab fa-discord"></i>
-                            </div>
-                            <h2>Создать аккаунт</h2>
-                            <p>Присоединяйтесь к сообществу!</p>
-                        </div>
-
+                    <form id="registerForm" class="auth-form">
+                        <h2>Создать аккаунт</h2>
+                        <p class="form-subtitle">Присоединяйся к нашему сообществу!</p>
+                        
                         <div class="input-group">
                             <label for="regEmail">Email</label>
                             <div class="input-with-icon">
@@ -140,7 +115,7 @@
                             <label for="regUsername">Имя пользователя</label>
                             <div class="input-with-icon">
                                 <i class="fas fa-user"></i>
-                                <input type="text" id="regUsername" placeholder="ivan" required>
+                                <input type="text" id="regUsername" placeholder="КрутоеИмя" required>
                             </div>
                         </div>
 
@@ -148,7 +123,10 @@
                             <label for="regPassword">Пароль</label>
                             <div class="input-with-icon">
                                 <i class="fas fa-lock"></i>
-                                <input type="password" id="regPassword" placeholder="Создайте пароль" required>
+                                <input type="password" id="regPassword" placeholder="Не менее 6 символов" required>
+                                <button type="button" class="show-password" onclick="togglePassword('regPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -160,51 +138,19 @@
                             </div>
                         </div>
 
-                        <div class="date-of-birth">
-                            <label>Дата рождения</label>
-                            <div class="dob-inputs">
-                                <select id="dobDay">
-                                    <option value="">День</option>
-                                    <!-- Дни будут заполнены JS -->
-                                </select>
-                                <select id="dobMonth">
-                                    <option value="">Месяц</option>
-                                    <!-- Месяцы будут заполнены JS -->
-                                </select>
-                                <select id="dobYear">
-                                    <option value="">Год</option>
-                                    <!-- Годы будут заполнены JS -->
-                                </select>
-                            </div>
-                        </div>
-
                         <div class="terms">
                             <label class="checkbox">
                                 <input type="checkbox" id="acceptTerms" required>
                                 <span class="custom-checkbox"></span>
-                                Я согласен с <a href="#">Условиями использования</a> и <a href="#">Политикой конфиденциальности</a>
+                                Я согласен с <a href="#">Условиями</a> и <a href="#">Политикой конфиденциальности</a>
                             </label>
                         </div>
 
-                        <button type="submit" class="btn-register-submit">
+                        <button type="button" onclick="registerUser()" class="btn-register">
                             <span class="btn-text">Продолжить</span>
                             <i class="fas fa-arrow-right"></i>
                         </button>
-
-                        <button type="button" class="btn-back" onclick="toggleRegister()">
-                            <i class="fas fa-arrow-left"></i>
-                            Назад ко входу
-                        </button>
                     </form>
-
-                    <div class="form-footer">
-                        <p>© 2024 RuCord. Все права защищены.</p>
-                        <div class="social-links">
-                            <a href="#"><i class="fab fa-twitter"></i></a>
-                            <a href="#"><i class="fab fa-youtube"></i></a>
-                            <a href="#"><i class="fab fa-github"></i></a>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -215,44 +161,69 @@
         <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
         <div class="top-bar">
             <div class="server-info">
-                <div class="server-icon-large">
+                <div class="server-icon">
                     <i class="fab fa-discord"></i>
                 </div>
-                <div class="server-details">
-                    <h3>Главный сервер</h3>
-                    <p class="server-topic">Общаемся, играем, творим ✨</p>
+                <h2>RuCord</h2>
+                <div class="server-status">
+                    <i class="fas fa-circle online"></i>
+                    <span id="onlineCount">1</span> онлайн
                 </div>
             </div>
 
             <div class="top-actions">
-                <button class="top-btn" onclick="toggleVoicePanel()">
+                <button class="action-btn" onclick="toggleVoicePanel()" title="Голосовой чат">
                     <i class="fas fa-headphones"></i>
-                    <span>Голосовой чат</span>
                 </button>
-                <button class="top-btn" onclick="showFriends()">
-                    <i class="fas fa-user-friends"></i>
+                <button class="action-btn" title="Уведомления">
+                    <i class="fas fa-bell"></i>
                     <span class="badge">3</span>
                 </button>
-                <button class="top-btn" onclick="toggleNotifications()">
-                    <i class="fas fa-bell"></i>
-                    <span class="badge">5</span>
-                </button>
                 <div class="user-menu" onclick="toggleUserMenu()">
-                    <div class="user-avatar">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" alt="Avatar">
+                    <div class="user-avatar-small" id="currentUserAvatar">
+                        <!-- Аватар загрузится через JS -->
                     </div>
-                    <div class="user-status"></div>
                 </div>
             </div>
         </div>
 
         <!-- ОСНОВНОЙ КОНТЕЙНЕР -->
         <div class="main-container">
-            <!-- ЛЕВАЯ ПАНЕЛЬ - КАНАЛЫ -->
-            <nav class="channels-nav">
-                <div class="nav-section">
-                    <h4 class="nav-title">ТЕКСТОВЫЕ КАНАЛЫ</h4>
-                    <div class="channel-list">
+            <!-- ЛЕВАЯ ПАНЕЛЬ -->
+            <nav class="sidebar">
+                <!-- СЕРВЕРЫ -->
+                <div class="servers">
+                    <div class="server-btn active" data-server="home" onclick="switchServer('home')">
+                        <div class="server-icon-small">
+                            <i class="fas fa-home"></i>
+                        </div>
+                    </div>
+                    <div class="server-btn" data-server="gaming" onclick="switchServer('gaming')">
+                        <div class="server-icon-small">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                    </div>
+                    <div class="server-btn" data-server="music" onclick="switchServer('music')">
+                        <div class="server-icon-small">
+                            <i class="fas fa-music"></i>
+                        </div>
+                    </div>
+                    <div class="server-btn" data-server="study" onclick="switchServer('study')">
+                        <div class="server-icon-small">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- КАНАЛЫ -->
+                <div class="channels-section">
+                    <div class="section-header">
+                        <span>ТЕКСТОВЫЕ КАНАЛЫ</span>
+                        <button class="add-btn" onclick="addChannel()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="channels-list">
                         <a href="#" class="channel active" onclick="switchChannel('general')">
                             <i class="fas fa-hashtag"></i>
                             <span>основной</span>
@@ -260,175 +231,112 @@
                         <a href="#" class="channel" onclick="switchChannel('games')">
                             <i class="fas fa-gamepad"></i>
                             <span>игры</span>
-                            <span class="unread">12</span>
+                            <span class="unread">5</span>
                         </a>
                         <a href="#" class="channel" onclick="switchChannel('music')">
                             <i class="fas fa-music"></i>
                             <span>музыка</span>
                         </a>
-                        <a href="#" class="channel" onclick="switchChannel('art')">
-                            <i class="fas fa-palette"></i>
-                            <span>творчество</span>
-                            <span class="unread">3</span>
-                        </a>
                         <a href="#" class="channel" onclick="switchChannel('memes')">
                             <i class="fas fa-laugh"></i>
                             <span>мемы</span>
-                        </a>
-                        <a href="#" class="channel" onclick="switchChannel('help')">
-                            <i class="fas fa-question-circle"></i>
-                            <span>помощь</span>
+                            <span class="unread">12</span>
                         </a>
                     </div>
                 </div>
 
-                <div class="nav-section">
-                    <h4 class="nav-title">ГОЛОСОВЫЕ КАНАЛЫ</h4>
+                <!-- ГОЛОСОВЫЕ КАНАЛЫ -->
+                <div class="channels-section">
+                    <div class="section-header">
+                        <span>ГОЛОСОВЫЕ КАНАЛЫ</span>
+                        <button class="add-btn" onclick="addVoiceChannel()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
                     <div class="voice-channels">
-                        <div class="voice-channel active" onclick="joinVoice('general')">
+                        <div class="voice-channel" onclick="joinVoice('general')">
                             <div class="voice-icon">
                                 <i class="fas fa-volume-up"></i>
-                                <div class="voice-pulse"></div>
                             </div>
                             <div class="voice-info">
                                 <span class="voice-name">Общий чат</span>
-                                <span class="voice-users">5 участников</span>
+                                <span class="voice-users">3 онлайн</span>
                             </div>
                             <button class="join-btn" onclick="joinVoice('general')">
                                 <i class="fas fa-headphones"></i>
                             </button>
                         </div>
-                        
                         <div class="voice-channel" onclick="joinVoice('gaming')">
                             <div class="voice-icon">
                                 <i class="fas fa-gamepad"></i>
                             </div>
                             <div class="voice-info">
                                 <span class="voice-name">Игровой</span>
-                                <span class="voice-users">3 участника</span>
+                                <span class="voice-users">2 онлайн</span>
                             </div>
                             <button class="join-btn" onclick="joinVoice('gaming')">
                                 <i class="fas fa-headphones"></i>
                             </button>
                         </div>
-                        
-                        <div class="voice-channel" onclick="joinVoice('music')">
-                            <div class="voice-icon">
-                                <i class="fas fa-music"></i>
-                            </div>
-                            <div class="voice-info">
-                                <span class="voice-name">Музыкальный</span>
-                                <span class="voice-users">2 участника</span>
-                            </div>
-                            <button class="join-btn" onclick="joinVoice('music')">
-                                <i class="fas fa-headphones"></i>
-                            </button>
-                        </div>
                     </div>
                 </div>
 
-                <div class="nav-section">
-                    <h4 class="nav-title">ПРЯМЫЕ СООБЩЕНИЯ</h4>
-                    <div class="dm-list">
-                        <!-- Будет заполнено JS -->
+                <!-- ПОЛЬЗОВАТЕЛЬ -->
+                <div class="user-card">
+                    <div class="user-avatar" id="userAvatar">
+                        <!-- Аватар загрузится через JS -->
                     </div>
-                </div>
-
-                <div class="user-profile-card">
-                    <div class="profile-avatar">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" alt="Avatar">
-                        <div class="status-indicator online"></div>
+                    <div class="user-info">
+                        <span class="username" id="usernameDisplay">Гость</span>
+                        <span class="user-status">#0000</span>
                     </div>
-                    <div class="profile-info">
-                        <span class="username">Иван</span>
-                        <span class="status-text">#0420</span>
-                    </div>
-                    <div class="profile-actions">
-                        <button class="profile-btn" onclick="toggleMic()">
+                    <div class="user-actions">
+                        <button class="user-action-btn" onclick="toggleMic()">
                             <i class="fas fa-microphone"></i>
                         </button>
-                        <button class="profile-btn" onclick="toggleDeafen()">
+                        <button class="user-action-btn" onclick="toggleDeafen()">
                             <i class="fas fa-headphones"></i>
                         </button>
-                        <button class="profile-btn" onclick="openSettings()">
+                        <button class="user-action-btn" onclick="openSettings()">
                             <i class="fas fa-cog"></i>
                         </button>
                     </div>
                 </div>
             </nav>
 
-            <!-- ОСНОВНАЯ ОБЛАСТЬ ЧАТА -->
-            <main class="chat-area">
+            <!-- ОСНОВНАЯ ОБЛАСТЬ -->
+            <main class="main-content">
                 <!-- ШАПКА КАНАЛА -->
                 <div class="channel-header">
                     <div class="channel-title">
                         <i class="fas fa-hashtag"></i>
-                        <h1>основной</h1>
+                        <h1 id="channelName">основной</h1>
                         <div class="channel-description">
-                            Общий канал для свободного общения
+                            Общий канал для общения
                         </div>
                     </div>
-                    
                     <div class="channel-actions">
-                        <button class="channel-action" onclick="toggleThreads()" title="Треды">
-                            <i class="fas fa-comments"></i>
-                        </button>
-                        <button class="channel-action" onclick="togglePins()" title="Закреплённые">
-                            <i class="fas fa-thumbtack"></i>
-                            <span class="badge-small">2</span>
-                        </button>
-                        <button class="channel-action" onclick="toggleMembers()" title="Участники">
-                            <i class="fas fa-user-friends"></i>
-                            <span class="badge-small" id="onlineCountBadge">42</span>
+                        <button class="channel-action" title="Участники" onclick="toggleMembers()">
+                            <i class="fas fa-users"></i>
+                            <span class="member-count">15</span>
                         </button>
                         <div class="search-box">
                             <i class="fas fa-search"></i>
-                            <input type="text" placeholder="Поиск" class="search-input">
+                            <input type="text" placeholder="Поиск..." class="search-input">
                         </div>
                     </div>
                 </div>
 
-                <!-- ОБЛАСТЬ СООБЩЕНИЙ -->
+                <!-- СООБЩЕНИЯ -->
                 <div class="messages-container" id="messagesContainer">
-                    <!-- Приветственное сообщение -->
-                    <div class="welcome-section">
-                        <div class="welcome-icon">
-                            <i class="fas fa-hashtag"></i>
-                        </div>
-                        <h2>Добро пожаловать в #основной!</h2>
-                        <p>Это начало этого канала. Отправьте первое сообщение!</p>
-                    </div>
-
-                    <!-- Пример сообщения -->
-                    <div class="message-container">
-                        <div class="message-avatar">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user1" alt="Avatar">
-                        </div>
-                        <div class="message-content">
-                            <div class="message-header">
-                                <span class="message-author">Алексей</span>
-                                <span class="message-time">Сегодня в 14:30</span>
-                            </div>
-                            <div class="message-text">
-                                Привет всем! Как дела? 👋
-                            </div>
-                            <div class="message-reactions">
-                                <button class="reaction">👍 3</button>
-                                <button class="reaction">😄 2</button>
-                                <button class="reaction">❤️ 1</button>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Сообщения будут здесь -->
                 </div>
 
                 <!-- ПОЛЕ ВВОДА -->
-                <div class="message-input-container">
+                <div class="message-input-area">
                     <div class="input-tools">
-                        <button class="tool-btn" onclick="toggleEmojiPicker()">
+                        <button class="tool-btn" onclick="addEmoji('😊')">
                             <i class="far fa-smile"></i>
-                        </button>
-                        <button class="tool-btn" onclick="toggleGifPicker()">
-                            <i class="fas fa-film"></i>
                         </button>
                         <button class="tool-btn" onclick="uploadFile()">
                             <i class="fas fa-plus"></i>
@@ -436,128 +344,67 @@
                     </div>
                     
                     <div class="message-input-wrapper">
-                        <div class="mention-suggestions"></div>
-                        <input 
-                            type="text" 
-                            id="messageInput" 
-                            placeholder="Написать сообщение в #основной..."
-                            autocomplete="off"
-                            onkeypress="handleMessageKeyPress(event)"
-                        >
+                        <form id="messageForm" onsubmit="sendMessage(event)">
+                            <input 
+                                type="text" 
+                                id="messageInput" 
+                                placeholder="Написать сообщение..."
+                                autocomplete="off"
+                            >
+                            <button type="submit" class="send-btn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
                         <div class="typing-indicator" id="typingIndicator">
                             <div class="typing-dots">
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
+                                <span></span>
+                                <span></span>
+                                <span></span>
                             </div>
-                            <span>Алексей печатает...</span>
+                            <span id="typingText"></span>
                         </div>
                     </div>
                     
-                    <div class="send-tools">
-                        <button class="tool-btn" title="Звуковое сообщение">
+                    <div class="voice-tools">
+                        <button class="tool-btn" title="Голосовое сообщение">
                             <i class="fas fa-microphone"></i>
-                        </button>
-                        <button class="send-btn" onclick="sendMessage()">
-                            <i class="fas fa-paper-plane"></i>
                         </button>
                     </div>
                 </div>
             </main>
 
-            <!-- ПРАВАЯ ПАНЕЛЬ - УЧАСТНИКИ -->
-            <aside class="members-sidebar" id="membersSidebar">
-                <div class="members-header">
-                    <h3>УЧАСТНИКИ — <span id="membersCount">42</span></h3>
+            <!-- ПРАВАЯ ПАНЕЛЬ -->
+            <aside class="right-sidebar" id="rightSidebar">
+                <div class="sidebar-header">
+                    <h3>Участники</h3>
                     <button class="close-btn" onclick="toggleMembers()">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                
-                <div class="members-list">
-                    <div class="member-category">
-                        <span class="category-title">ОНЛАЙН — <span id="onlineCount">24</span></span>
-                    </div>
-                    
-                    <div class="member" data-status="online">
-                        <div class="member-avatar">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user1" alt="Avatar">
-                            <div class="status online"></div>
-                        </div>
-                        <div class="member-info">
-                            <span class="member-name">Алексей</span>
-                            <span class="member-activity">Играет в Valorant</span>
-                        </div>
-                    </div>
-                    
-                    <div class="member" data-status="idle">
-                        <div class="member-avatar">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user2" alt="Avatar">
-                            <div class="status idle"></div>
-                        </div>
-                        <div class="member-info">
-                            <span class="member-name">Мария</span>
-                            <span class="member-activity">Не активна</span>
-                        </div>
-                    </div>
-                    
-                    <div class="member" data-status="dnd">
-                        <div class="member-avatar">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user3" alt="Avatar">
-                            <div class="status dnd"></div>
-                        </div>
-                        <div class="member-info">
-                            <span class="member-name">Дмитрий</span>
-                            <span class="member-activity">Не беспокоить</span>
-                        </div>
-                    </div>
-                    
-                    <div class="member-category">
-                        <span class="category-title">ОФФЛАЙН — <span id="offlineCount">18</span></span>
-                    </div>
-                </div>
-                
-                <!-- ГОЛОСОВОЙ ЧАТ -->
-                <div class="voice-chat-preview">
-                    <h4>Сейчас в голосовом</h4>
-                    <div class="voice-participants">
-                        <div class="voice-participant">
-                            <div class="participant-avatar">
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user1" alt="Avatar">
-                                <div class="voice-speaking"></div>
-                            </div>
-                            <span class="participant-name">Алексей</span>
-                            <div class="voice-status">
-                                <i class="fas fa-volume-up"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="join-voice-btn" onclick="joinVoice('general')">
-                        <i class="fas fa-headphones"></i>
-                        Подключиться к голосовому
-                    </button>
+                <div class="members-list" id="membersList">
+                    <!-- Участники будут здесь -->
                 </div>
             </aside>
         </div>
 
-        <!-- ГОЛОСОВОЙ ЧАТ ПАНЕЛЬ -->
+        <!-- ГОЛОСОВАЯ ПАНЕЛЬ -->
         <div class="voice-panel" id="voicePanel" style="display: none;">
             <div class="voice-panel-header">
-                <h4><i class="fas fa-headphones"></i> Голосовой чат</h4>
-                <button class="close-voice" onclick="toggleVoicePanel()">
+                <h4><i class="fas fa-headphones"></i> Голосовые каналы</h4>
+                <button class="close-btn" onclick="toggleVoicePanel()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="voice-panel-content">
-                <p>Выберите голосовой канал:</p>
+                <p>Выберите канал для подключения:</p>
                 <div class="voice-links">
                     <a href="https://telemost.yandex.ru/j/34914547450041" target="_blank" class="voice-link">
-                        <i class="fas fa-video"></i>
-                        <span>Общий голосовой</span>
+                        <i class="fas fa-comments"></i>
+                        <span>Основной голосовой</span>
                     </a>
                     <a href="https://telemost.yandex.ru/j/57528138882724" target="_blank" class="voice-link">
                         <i class="fas fa-gamepad"></i>
-                        <span>Игровой</span>
+                        <span>Игровой чат</span>
                     </a>
                     <a href="https://telemost.yandex.ru/j/66937963558228" target="_blank" class="voice-link">
                         <i class="fas fa-music"></i>
@@ -566,16 +413,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- ЭМОДЗИ ПИКЕР -->
-        <div class="emoji-picker-modal" id="emojiPicker">
-            <div class="emoji-picker-content">
-                <!-- Содержимое будет заполнено JS -->
-            </div>
-        </div>
-
-        <!-- УВЕДОМЛЕНИЯ -->
-        <div class="notifications-container" id="notificationsContainer"></div>
     </div>
 
     <!-- СКРИПТЫ -->
